@@ -1,19 +1,22 @@
 <template>
   <div class="tool-container">
-    <div class="tool-header">
-      <h2>MQTT 连接</h2>
-      <p class="description">通过 MQTT over WebSocket 连接 Broker，订阅主题并发布消息</p>
-    </div>
+    <ToolHeader
+      title="MQTT 连接"
+      description="通过 MQTT over WebSocket 连接 Broker，订阅主题并发布消息"
+    />
 
     <div class="tool-content">
       <n-card class="panel-card section-gap" title="连接配置">
-        <n-grid :cols="4" :x-gap="12" :y-gap="12" responsive="screen">
+        <n-grid :cols="6" :x-gap="12" :y-gap="12" responsive="screen">
           <n-grid-item span="2">
-            <n-form-item label="WebSocket 地址">
-              <n-input v-model:value="form.url" placeholder="wss://broker.emqx.io:8084/mqtt" clearable />
+            <n-form-item label="服务器地址">
+              <n-input-group>
+                <n-select v-model:value="form.protocol" :options="protocolOptions" style="width: 80px" />
+                <n-input v-model:value="form.host" placeholder="broker.emqx.io:8083/mqtt" clearable />
+              </n-input-group>
             </n-form-item>
           </n-grid-item>
-          <n-grid-item>
+          <n-grid-item span="2">
             <n-form-item label="Client ID">
               <n-input v-model:value="form.clientId" clearable />
             </n-form-item>
@@ -24,11 +27,16 @@
             </n-form-item>
           </n-grid-item>
           <n-grid-item>
+            <n-form-item label="MQTT 版本">
+              <n-select v-model:value="form.protocolVersion" :options="versionOptions" />
+            </n-form-item>
+          </n-grid-item>
+          <n-grid-item span="2">
             <n-form-item label="用户名">
               <n-input v-model:value="form.username" placeholder="可选" clearable />
             </n-form-item>
           </n-grid-item>
-          <n-grid-item>
+          <n-grid-item span="2">
             <n-form-item label="密码">
               <n-input v-model:value="form.password" type="password" placeholder="可选" clearable show-password-on="click" />
             </n-form-item>
@@ -150,10 +158,11 @@ import {
   NGrid,
   NGridItem,
   NInput,
+  NInputGroup,
   NInputNumber,
+  NSelect,
   NSpace,
-  NTag,
-  useMessage
+  NTag
 } from 'naive-ui'
 import {
   buildConnectPacket,
@@ -165,6 +174,9 @@ import {
   decodeMqttPacket,
   type MqttPacket
 } from './mqtt'
+import { useClipboard } from '@/composables/useClipboard'
+
+const { copy } = useClipboard()
 
 type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'closed'
 type LogDirection = 'system' | 'out' | 'in' | 'error'
@@ -178,15 +190,26 @@ interface LogItem {
   tagType: 'default' | 'info' | 'success' | 'warning' | 'error'
 }
 
-const message = useMessage()
+const protocolOptions = [
+  { label: 'ws://', value: 'ws' },
+  { label: 'wss://', value: 'wss' }
+]
+
+const versionOptions = [
+  { label: 'MQTT 3.1', value: 3 },
+  { label: 'MQTT 3.1.1', value: 4 },
+  { label: 'MQTT 5.0', value: 5 }
+]
 
 const form = reactive({
-  url: 'wss://broker.emqx.io:8084/mqtt',
+  protocol: 'ws' as 'ws' | 'wss',
+  host: 'broker.emqx.io:8083/mqtt',
   clientId: `toolbox_${Math.random().toString(16).slice(2, 10)}`,
   username: '',
   password: '',
   cleanSession: true,
-  keepAlive: 60
+  keepAlive: 60,
+  protocolVersion: 5
 })
 
 const subscribeTopic = ref('toolbox/demo')
@@ -223,12 +246,24 @@ const statusTagType = computed(() => {
   return 'default'
 })
 
+const getWebSocketUrl = (): string => {
+  const host = form.host.trim()
+  const wsProtocol = form.protocol
+  return `${wsProtocol}://${host}`
+}
+
 const connect = () => {
   error.value = ''
-  const targetUrl = form.url.trim()
+
+  if (!form.host.trim()) {
+    error.value = '请输入服务器地址'
+    return
+  }
+
+  const targetUrl = getWebSocketUrl()
 
   if (!/^wss?:\/\//i.test(targetUrl)) {
-    error.value = '请输入 ws:// 或 wss:// 开头的 MQTT WebSocket 地址'
+    error.value = '无效的连接地址'
     return
   }
 
@@ -252,9 +287,10 @@ const connect = () => {
         username: form.username.trim(),
         password: form.password,
         cleanSession: form.cleanSession,
-        keepAlive: form.keepAlive
+        keepAlive: form.keepAlive,
+        protocolVersion: form.protocolVersion
       }))
-      appendLog('out', 'CONNECT', `clientId=${form.clientId.trim()} cleanSession=${form.cleanSession}`)
+      appendLog('out', 'CONNECT', `clientId=${form.clientId.trim()} cleanSession=${form.cleanSession} version=${form.protocolVersion}`)
     })
 
     socket.addEventListener('message', event => {
@@ -463,12 +499,14 @@ const nextPacketId = () => {
 }
 
 const loadDemo = () => {
-  form.url = 'wss://broker.emqx.io:8084/mqtt'
+  form.protocol = 'ws'
+  form.host = 'broker.emqx.io:8083/mqtt'
   form.clientId = `toolbox_${Math.random().toString(16).slice(2, 10)}`
   form.username = ''
   form.password = ''
   form.cleanSession = true
   form.keepAlive = 60
+  form.protocolVersion = 5
   subscribeTopic.value = 'toolbox/demo'
   publishTopic.value = 'toolbox/demo'
   publishPayload.value = 'hello mqtt'
@@ -483,13 +521,8 @@ const clearLogs = () => {
   logs.value = []
 }
 
-const copyLogs = async () => {
-  try {
-    await navigator.clipboard.writeText(logs.value.map(item => `[${item.time}] ${item.label} ${item.content}`).join('\n'))
-    message.success('已复制日志')
-  } catch (err) {
-    message.error('复制失败')
-  }
+const copyLogs = () => {
+  copy(logs.value.map(item => `[${item.time}] ${item.label} ${item.content}`).join('\n'), '已复制日志')
 }
 
 const appendLog = (direction: LogDirection, label: string, content: string) => {
@@ -525,23 +558,6 @@ onBeforeUnmount(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-}
-
-.tool-header {
-  margin-bottom: var(--spacing-xl);
-}
-
-.tool-header h2 {
-  font-size: var(--font-size-2xl);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-xs) 0;
-}
-
-.description {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  margin: 0;
 }
 
 .tool-content {

@@ -1,9 +1,9 @@
 <template>
   <div class="tool-container">
-    <div class="tool-header">
-      <h2>WebSocket 连接</h2>
-      <p class="description">连接 WebSocket 服务，发送消息并查看实时收发日志</p>
-    </div>
+    <ToolHeader
+      title="WebSocket 连接"
+      description="连接 WebSocket 服务，发送消息并查看收发日志"
+    />
 
     <div class="tool-content">
       <div class="workspace-grid">
@@ -109,9 +109,11 @@ import {
   NInput,
   NSelect,
   NSpace,
-  NTag,
-  useMessage
+  NTag
 } from 'naive-ui'
+import { useClipboard } from '@/composables/useClipboard'
+
+const { copy } = useClipboard()
 
 type ConnectionStatus = 'idle' | 'connecting' | 'connected' | 'closed'
 type MessageMode = 'text' | 'json'
@@ -125,8 +127,6 @@ interface LogItem {
   content: string
   tagType: 'default' | 'info' | 'success' | 'warning' | 'error'
 }
-
-const message = useMessage()
 
 const url = ref('wss://echo.websocket.events')
 const protocols = ref('')
@@ -279,13 +279,8 @@ const clearLogs = () => {
   logs.value = []
 }
 
-const copyLogs = async () => {
-  try {
-    await navigator.clipboard.writeText(logs.value.map(item => `[${item.time}] ${item.label} ${item.content}`).join('\n'))
-    message.success('已复制日志')
-  } catch (err) {
-    message.error('复制失败')
-  }
+const copyLogs = () => {
+  copy(logs.value.map(item => `[${item.time}] ${item.label} ${item.content}`).join('\n'), '已复制日志')
 }
 
 const appendLog = (direction: LogDirection, label: string, content: string) => {
@@ -341,23 +336,6 @@ onBeforeUnmount(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-}
-
-.tool-header {
-  margin-bottom: var(--spacing-xl);
-}
-
-.tool-header h2 {
-  font-size: var(--font-size-2xl);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-xs) 0;
-}
-
-.description {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  margin: 0;
 }
 
 .tool-content {

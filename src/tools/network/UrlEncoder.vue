@@ -1,9 +1,9 @@
 <template>
   <div class="tool-container">
-    <div class="tool-header">
-      <h2>URL 编码/解码</h2>
-      <p class="description">对 URL 进行编码和解码操作</p>
-    </div>
+    <ToolHeader
+      title="URL 编码/解码"
+      description="对 URL 进行编码和解码操作"
+    />
 
     <div class="tool-content">
       <n-card title="输入">
@@ -79,9 +79,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { NCard, NInput, NButton, NSpace, NAlert, NCode } from 'naive-ui'
-import { useMessage } from 'naive-ui'
+import ToolHeader from '@/components/ToolHeader.vue'
+import { useClipboard } from '@/composables/useClipboard'
 
-const message = useMessage()
+const { copy } = useClipboard()
 
 const input = ref('')
 const output = ref('')
@@ -145,36 +146,14 @@ const handleClear = () => {
   error.value = ''
 }
 
-const handleCopyOutput = async () => {
-  try {
-    await navigator.clipboard.writeText(output.value)
-    message.success('已复制到剪贴板')
-  } catch (err) {
-    message.error('复制失败')
-  }
+const handleCopyOutput = () => {
+  copy(output.value)
 }
 </script>
 
 <style scoped>
 .tool-container {
   padding: var(--spacing-lg);
-}
-
-.tool-header {
-  margin-bottom: var(--spacing-xl);
-}
-
-.tool-header h2 {
-  font-size: var(--font-size-2xl);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-xs) 0;
-}
-
-.description {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  margin: 0;
 }
 
 .tool-content {

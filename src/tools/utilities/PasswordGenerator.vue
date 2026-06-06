@@ -1,9 +1,9 @@
 <template>
   <div class="tool-container">
-    <div class="tool-header">
-      <h2>密码生成器</h2>
-      <p class="description">生成安全的随机密码</p>
-    </div>
+    <ToolHeader
+      title="密码生成器"
+      description="生成安全的随机密码"
+    />
 
     <div class="tool-content">
       <div class="top-card-grid">
@@ -14,9 +14,9 @@
               <n-slider v-model:value="length" :min="4" :max="64" :step="1" />
             </div>
 
-            <div>
-              <n-text strong>字符类型</n-text>
-              <n-space :size="12" style="margin-top: 8px">
+            <div class="character-type-row">
+              <n-text strong class="character-type-label">字符类型</n-text>
+              <n-space class="character-type-options" :size="[16, 8]">
                 <n-checkbox v-model:checked="options.uppercase">
                   大写字母 (A-Z)
                 </n-checkbox>
@@ -129,9 +129,11 @@
 
 <script setup lang="ts">
 import { computed, ref, reactive } from 'vue'
-import { NCard, NSlider, NCheckbox, NInput, NInputNumber, NButton, NSpace, NAlert, NTag, NText, useMessage } from 'naive-ui'
+import { NCard, NSlider, NCheckbox, NInput, NInputNumber, NButton, NSpace, NAlert, NTag, NText } from 'naive-ui'
+import ToolHeader from '@/components/ToolHeader.vue'
+import { useClipboard } from '@/composables/useClipboard'
 
-const message = useMessage()
+const { copy } = useClipboard()
 
 const length = ref(16)
 const count = ref(1)
@@ -210,22 +212,12 @@ const generatePassword = (charset: string, len: number): string => {
   return password
 }
 
-const handleCopy = async (pwd: string) => {
-  try {
-    await navigator.clipboard.writeText(pwd)
-    message.success('已复制到剪贴板')
-  } catch (err) {
-    message.error('复制失败')
-  }
+const handleCopy = (pwd: string) => {
+  copy(pwd)
 }
 
-const handleCopyAll = async () => {
-  try {
-    await navigator.clipboard.writeText(passwords.value.join('\n'))
-    message.success('已复制所有密码到剪贴板')
-  } catch (err) {
-    message.error('复制失败')
-  }
+const handleCopyAll = () => {
+  copy(passwords.value.join('\n'), '已复制所有密码到剪贴板')
 }
 
 const handleToggleVisibility = (index: number) => {
@@ -278,23 +270,6 @@ const calculateStrength = (pwd: string): number => {
   padding: var(--spacing-lg);
 }
 
-.tool-header {
-  margin-bottom: var(--spacing-xl);
-}
-
-.tool-header h2 {
-  font-size: var(--font-size-2xl);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-xs) 0;
-}
-
-.description {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  margin: 0;
-}
-
 .tool-content {
   max-width: 100%;
 }
@@ -311,6 +286,22 @@ const calculateStrength = (pwd: string): number => {
   grid-template-columns: 150px 1fr;
   align-items: center;
   gap: var(--spacing-md);
+}
+
+.character-type-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.character-type-label {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.character-type-options {
+  flex: 1;
+  min-width: 0;
 }
 
 .password-results-card {
@@ -357,6 +348,14 @@ const calculateStrength = (pwd: string): number => {
 @media (max-width: 900px) {
   .top-card-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .character-type-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--spacing-sm);
   }
 }
 </style>

@@ -1,9 +1,9 @@
 <template>
   <div class="tool-container">
-    <div class="tool-header">
-      <h2>IP 地址查询</h2>
-      <p class="description">查询 IP 地址的地理位置和网络信息</p>
-    </div>
+    <ToolHeader
+      title="IP 地址查询"
+      description="查询 IP 地址的地理位置和网络信息"
+    />
 
     <div class="tool-content">
       <n-card title="查询 IP 地址">
@@ -68,6 +68,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { NCard, NInput, NButton, NSpace, NDescriptions, NDescriptionsItem, NAlert } from 'naive-ui'
+import ToolHeader from '@/components/ToolHeader.vue'
 
 const ipInput = ref('')
 const loading = ref(false)
@@ -166,23 +167,6 @@ onMounted(() => {
 <style scoped>
 .tool-container {
   padding: var(--spacing-lg);
-}
-
-.tool-header {
-  margin-bottom: var(--spacing-xl);
-}
-
-.tool-header h2 {
-  font-size: var(--font-size-2xl);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-xs) 0;
-}
-
-.description {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  margin: 0;
 }
 
 .tool-content {

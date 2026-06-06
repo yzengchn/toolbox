@@ -3,6 +3,7 @@ import PasswordGenerator from './PasswordGenerator.vue'
 import UuidGenerator from './UuidGenerator.vue'
 import QrCodeGenerator from './QrCodeGenerator.vue'
 import ColorConverter from './ColorConverter.vue'
+import Base64ImageTool from './Base64ImageTool.vue'
 
 export const utilitiesTools: Tool[] = [
   {
@@ -27,7 +28,7 @@ export const utilitiesTools: Tool[] = [
   },
   {
     id: 'qrcode-generator',
-    name: 'QR 码生成器',
+    name: '二维码生成器',
     description: '生成二维码图片',
     icon: 'mdi:qrcode',
     category: 'utilities',
@@ -44,5 +45,15 @@ export const utilitiesTools: Tool[] = [
     keywords: ['color', 'hex', 'rgb', 'hsl', '颜色', '转换'],
     component: ColorConverter,
     path: '/tool/color-converter'
+  },
+  {
+    id: 'base64-image',
+    name: 'Base64 图片',
+    description: '图片与 Base64 字符串互转，支持拖拽上传',
+    icon: 'mdi:image-outline',
+    category: 'utilities',
+    keywords: ['base64', 'image', '图片', '编码', '解码', 'dataurl'],
+    component: Base64ImageTool,
+    path: '/tool/base64-image'
   }
 ]

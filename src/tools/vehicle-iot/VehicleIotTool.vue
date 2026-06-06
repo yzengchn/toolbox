@@ -1,9 +1,9 @@
 <template>
   <div class="tool-container">
-    <div class="tool-header">
-      <h2>国标解析</h2>
-      <p class="description">JT/T 808、JT/T 809 报文解析、基础组包、Hex 转换和常用字段换算</p>
-    </div>
+    <ToolHeader
+      title="国标解析"
+      description="JT808/JT809 报文解析、基础组包、Hex 转换和常用字段换算"
+    />
 
     <div class="tool-content">
       <n-tabs type="line" animated>
@@ -376,8 +376,7 @@ import {
   NSpace,
   NTabPane,
   NTabs,
-  NTag,
-  useMessage
+  NTag
 } from 'naive-ui'
 import {
   bcdToText,
@@ -395,8 +394,9 @@ import {
   type Jt808ParseResult,
   type Jt809ParseResult
 } from './utils'
+import { useClipboard } from '@/composables/useClipboard'
 
-const message = useMessage()
+const { copy } = useClipboard()
 
 const demoFrame = '7E 02 00 00 26 12 34 56 78 90 12 00 7D 02 00 00 00 01 00 00 00 02 00 BA 7F 0E 07 E4 F1 1C 00 28 00 3C 00 00 18 10 15 10 10 10 01 04 00 00 00 64 02 02 00 7D 01 13 7E'
 const demoJt809Frame = '5B 00 00 00 00 00 00 00 01 10 01 00 00 00 01 00 00 00 00 00 41 BC 5D'
@@ -616,13 +616,8 @@ const runFieldTool = (runner: () => void) => {
   }
 }
 
-const copyText = async (value: string) => {
-  try {
-    await navigator.clipboard.writeText(value)
-    message.success('已复制到剪贴板')
-  } catch (err) {
-    message.error('复制失败')
-  }
+const copyText = (value: string) => {
+  copy(value)
 }
 
 
@@ -640,23 +635,6 @@ handleNowTime()
   height: 100%;
   display: flex;
   flex-direction: column;
-}
-
-.tool-header {
-  margin-bottom: var(--spacing-xl);
-}
-
-.tool-header h2 {
-  font-size: var(--font-size-2xl);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-xs) 0;
-}
-
-.description {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  margin: 0;
 }
 
 .tool-content {

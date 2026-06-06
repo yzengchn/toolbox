@@ -1,9 +1,9 @@
 <template>
   <div class="tool-container">
-    <div class="tool-header">
-      <h2>UUID 生成器</h2>
-      <p class="description">生成 UUID (通用唯一识别码)</p>
-    </div>
+    <ToolHeader
+      title="UUID 生成器"
+      description="生成 UUID (通用唯一识别码)"
+    />
 
     <div class="tool-content">
       <div class="top-card-grid">
@@ -111,9 +111,11 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { NCard, NInputNumber, NRadioGroup, NRadio, NInput, NButton, NSpace, NText, useMessage } from 'naive-ui'
+import { NCard, NInputNumber, NRadioGroup, NRadio, NInput, NButton, NSpace, NText } from 'naive-ui'
+import ToolHeader from '@/components/ToolHeader.vue'
+import { useClipboard } from '@/composables/useClipboard'
 
-const message = useMessage()
+const { copy } = useClipboard()
 
 const version = ref('v4')
 const count = ref(1)
@@ -150,22 +152,12 @@ const handleGenerate = () => {
   }
 }
 
-const handleCopy = async (uuid: string) => {
-  try {
-    await navigator.clipboard.writeText(uuid)
-    message.success('已复制到剪贴板')
-  } catch (err) {
-    message.error('复制失败')
-  }
+const handleCopy = (uuid: string) => {
+  copy(uuid)
 }
 
-const handleCopyAll = async () => {
-  try {
-    await navigator.clipboard.writeText(uuids.value.join('\n'))
-    message.success('已复制所有 UUID 到剪贴板')
-  } catch (err) {
-    message.error('复制失败')
-  }
+const handleCopyAll = () => {
+  copy(uuids.value.join('\n'), '已复制所有 UUID 到剪贴板')
 }
 
 const handleClear = () => {
@@ -176,23 +168,6 @@ const handleClear = () => {
 <style scoped>
 .tool-container {
   padding: var(--spacing-lg);
-}
-
-.tool-header {
-  margin-bottom: var(--spacing-xl);
-}
-
-.tool-header h2 {
-  font-size: var(--font-size-2xl);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-xs) 0;
-}
-
-.description {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  margin: 0;
 }
 
 .tool-content {

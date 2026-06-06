@@ -1,9 +1,9 @@
 <template>
   <div class="tool-container">
-    <div class="tool-header">
-      <h2>Base64 编码/解码</h2>
-      <p class="description">支持普通 Base64 和 URL Safe Base64 的文本编码、解码与校验</p>
-    </div>
+    <ToolHeader
+      title="Base64 编码/解码"
+      description="支持普通 Base64 和 URL Safe Base64 的文本编码、解码与校验"
+    />
 
     <div class="tool-content">
       <n-card title="输入" class="input-card">
@@ -26,9 +26,6 @@
 
             <n-button @click="handleSwap" :disabled="!output">
               交换
-            </n-button>
-            <n-button @click="handlePaste">
-              粘贴
             </n-button>
             <n-button @click="handleClear">
               清空
@@ -104,8 +101,10 @@ import {
 } from 'naive-ui'
 import { useClipboard } from '@/composables/useClipboard'
 import { decodeBase64, encodeBase64, isValidBase64 } from './utils'
+import ToolHeader from '@/components/ToolHeader.vue'
+import { debounce } from '@/utils/debounce'
 
-const { copy, paste } = useClipboard()
+const { copy } = useClipboard()
 
 const input = ref('')
 const output = ref('')
@@ -146,17 +145,16 @@ const handleSwap = () => {
   error.value = ''
 }
 
-const handlePaste = async () => {
-  input.value = await paste()
-}
-
 const handleClear = () => {
   input.value = ''
   output.value = ''
   error.value = ''
 }
 
-watch([input, mode, urlSafe], updateOutput)
+// 创建防抖版本用于输入变化
+const debouncedUpdateOutput = debounce(updateOutput, 300)
+
+watch([input, mode, urlSafe], debouncedUpdateOutput)
 </script>
 
 <style scoped>

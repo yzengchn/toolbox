@@ -1,7 +1,7 @@
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, type Ref } from 'vue'
 
 export function useStorage<T>(key: string, defaultValue: T) {
-  const data = ref<T>(defaultValue) as any
+  const data: Ref<T> = ref(defaultValue) as Ref<T>
 
   // 从 LocalStorage 加载
   const load = () => {

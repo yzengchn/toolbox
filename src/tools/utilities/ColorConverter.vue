@@ -1,9 +1,9 @@
 <template>
   <div class="tool-container">
-    <div class="tool-header">
-      <h2>颜色转换器</h2>
-      <p class="description">在不同颜色格式之间转换 (HEX, RGB, HSL)</p>
-    </div>
+    <ToolHeader
+      title="颜色转换器"
+      description="在不同颜色格式之间转换 (HEX, RGB, HSL)"
+    />
 
     <div class="tool-content">
       <n-card title="输入颜色">
@@ -163,9 +163,11 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
-import { NCard, NInput, NInputNumber, NTabs, NTabPane, NButton, NSpace, useMessage } from 'naive-ui'
+import { NCard, NInput, NInputNumber, NTabs, NTabPane, NButton, NSpace } from 'naive-ui'
+import ToolHeader from '@/components/ToolHeader.vue'
+import { useClipboard } from '@/composables/useClipboard'
 
-const message = useMessage()
+const { copy } = useClipboard()
 
 const hexInput = ref('')
 const rgb = reactive({ r: 0, g: 0, b: 0 })
@@ -334,13 +336,8 @@ const handleSelectColor = (hex: string) => {
   handleHexInput()
 }
 
-const handleCopy = async (text: string) => {
-  try {
-    await navigator.clipboard.writeText(text)
-    message.success('已复制到剪贴板')
-  } catch (err) {
-    message.error('复制失败')
-  }
+const handleCopy = (text: string) => {
+  copy(text)
 }
 
 const handleClear = () => {
@@ -359,23 +356,6 @@ const handleClear = () => {
 <style scoped>
 .tool-container {
   padding: var(--spacing-lg);
-}
-
-.tool-header {
-  margin-bottom: var(--spacing-xl);
-}
-
-.tool-header h2 {
-  font-size: var(--font-size-2xl);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-xs) 0;
-}
-
-.description {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  margin: 0;
 }
 
 .tool-content {

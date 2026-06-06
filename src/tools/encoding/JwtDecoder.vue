@@ -1,9 +1,9 @@
 <template>
   <div class="tool-container">
-    <div class="tool-header">
-      <h2>JWT 解码</h2>
-      <p class="description">解析 JWT 的 Header、Payload、Signature，并检查是否已过期</p>
-    </div>
+    <ToolHeader
+      title="JWT 解码"
+      description="解析 JWT 的 Header、Payload、Signature 与过期状态"
+    />
 
     <div class="tool-content">
       <n-grid cols="1 m:2" responsive="screen" :x-gap="16" :y-gap="16">
@@ -19,14 +19,8 @@
               />
 
               <n-space wrap>
-                <n-button type="primary" @click="handleDecode">
-                  解析
-                </n-button>
                 <n-button @click="fillExample">
                   示例
-                </n-button>
-                <n-button @click="handlePaste">
-                  粘贴
                 </n-button>
                 <n-button @click="handleClear">
                   清空
@@ -52,7 +46,7 @@
               </n-button>
             </template>
 
-            <n-empty v-if="!result && !error" description="输入 Token 后点击解析" />
+            <n-empty v-if="!result && !error" description="输入 Token 后自动解析" />
 
             <n-space v-else-if="result" vertical :size="16">
               <n-alert
@@ -131,7 +125,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import {
   NAlert,
   NButton,
@@ -146,8 +140,9 @@ import {
 } from 'naive-ui'
 import { useClipboard } from '@/composables/useClipboard'
 import { decodeJWT, encodeBase64, type JwtDecodeResult } from './utils'
+import ToolHeader from '@/components/ToolHeader.vue'
 
-const { copy, paste } = useClipboard()
+const { copy } = useClipboard()
 
 const token = ref('')
 const error = ref('')
@@ -175,6 +170,11 @@ const buildExampleToken = () => {
 const handleDecode = () => {
   error.value = ''
 
+  if (!token.value.trim()) {
+    result.value = null
+    return
+  }
+
   try {
     result.value = decodeJWT(token.value)
   } catch (decodeError) {
@@ -185,11 +185,6 @@ const handleDecode = () => {
 
 const fillExample = () => {
   token.value = buildExampleToken()
-  handleDecode()
-}
-
-const handlePaste = async () => {
-  token.value = await paste()
 }
 
 const handleClear = () => {
@@ -212,28 +207,16 @@ const handleCopySummary = async () => {
     payloadText.value
   ].join('\n'))
 }
+
+// 实时监听 token 输入变化
+watch(token, () => {
+  handleDecode()
+})
 </script>
 
 <style scoped>
 .tool-container {
   padding: var(--spacing-lg);
-}
-
-.tool-header {
-  margin-bottom: var(--spacing-xl);
-}
-
-.tool-header h2 {
-  font-size: var(--font-size-2xl, 28px);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-xs) 0;
-}
-
-.description {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  margin: 0;
 }
 
 .tool-content {

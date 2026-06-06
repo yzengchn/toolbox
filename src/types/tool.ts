@@ -1,3 +1,5 @@
+import type { Component } from 'vue'
+
 export type ToolCategory = 'encoding' | 'formatter' | 'time' | 'utilities' | 'vehicle-iot' | 'network' | 'connection'
 
 export interface Tool {
@@ -7,7 +9,7 @@ export interface Tool {
   icon: string
   category: ToolCategory
   keywords: string[]
-  component: any
+  component: Component
   path: string
 }
 

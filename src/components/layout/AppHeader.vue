@@ -15,7 +15,7 @@
         </template>
       </n-button>
       <div class="logo">
-        <span class="logo-icon">🧰</span>
+        <img src="/logo-icon.png" alt="ToolBox" class="logo-icon" />
         <span class="logo-text">ToolBox</span>
       </div>
 
@@ -34,6 +34,27 @@
     </div>
 
     <div class="header-right">
+      <!-- 搜索框 -->
+      <div class="search-wrapper">
+        <n-auto-complete
+          v-model:value="searchQuery"
+          :options="searchOptions"
+          placeholder="搜索工具..."
+          clearable
+          size="small"
+          class="tool-search"
+          @select="handleSelectTool"
+        >
+          <template #prefix>
+            <n-icon size="16" style="margin-right: 4px">
+              <svg viewBox="0 0 24 24">
+                <path fill="currentColor" d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z" />
+              </svg>
+            </n-icon>
+          </template>
+        </n-auto-complete>
+      </div>
+
       <a
         href="https://github.com/yzengchn/toolbox"
         target="_blank"
@@ -85,12 +106,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { NButton, NButtonGroup, NIcon } from 'naive-ui'
+import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { NAutoComplete, NButton, NButtonGroup, NIcon, type AutoCompleteOption } from 'naive-ui'
 import { useTheme } from '@/composables/useTheme'
 import { useAppStore } from '@/stores/app'
 import { allTools } from '@/tools'
 
+const router = useRouter()
 const { isDark, setTheme } = useTheme()
 const appStore = useAppStore()
 
@@ -99,6 +122,97 @@ const favoriteTools = computed(() => {
     .map(id => allTools.find(tool => tool.id === id))
     .filter((tool): tool is NonNullable<typeof tool> => tool !== undefined)
 })
+
+// 搜索功能
+const searchQuery = ref('')
+
+type SearchOption = AutoCompleteOption & {
+  description?: string
+  type?: 'recent' | 'favorite' | 'search'
+}
+
+const searchOptions = computed(() => {
+  const query = searchQuery.value.toLowerCase().trim()
+
+  if (!query) {
+    const options: SearchOption[] = []
+
+    // 添加最近使用的工具
+    const recentToolsList = appStore.recentTools
+      .map(id => allTools.find(tool => tool.id === id))
+      .filter((tool): tool is NonNullable<typeof tool> => tool !== undefined)
+      .slice(0, 5)
+
+    if (recentToolsList.length > 0) {
+      options.push({
+        label: '── 最近使用 ──',
+        value: 'header-recent',
+        type: 'recent'
+      })
+      recentToolsList.forEach(tool => {
+        options.push({
+          label: `🕐 ${tool.name}`,
+          value: tool.path,
+          description: tool.description,
+          type: 'recent'
+        })
+      })
+    }
+
+    // 添加收藏的工具
+    const favoritesList = appStore.favorites
+      .map(id => allTools.find(tool => tool.id === id))
+      .filter((tool): tool is NonNullable<typeof tool> => tool !== undefined)
+      .slice(0, 5)
+
+    if (favoritesList.length > 0) {
+      options.push({
+        label: '── 我的收藏 ──',
+        value: 'header-favorite',
+        type: 'favorite'
+      })
+      favoritesList.forEach(tool => {
+        options.push({
+          label: `⭐ ${tool.name}`,
+          value: tool.path,
+          description: tool.description,
+          type: 'favorite'
+        })
+      })
+    }
+
+    return options
+  }
+
+  // 搜索工具名称、描述和关键词
+  const results = allTools.filter(tool => {
+    const searchText = [
+      tool.name,
+      tool.description,
+      ...tool.keywords
+    ].join(' ').toLowerCase()
+
+    return searchText.includes(query)
+  })
+
+  // 限制结果数量
+  return results.slice(0, 8).map(tool => ({
+    label: tool.name,
+    value: tool.path,
+    description: tool.description,
+    type: 'search' as const
+  }))
+})
+
+const handleSelectTool = (value: string) => {
+  // 忽略标题行
+  if (value.startsWith('header-')) {
+    return
+  }
+
+  router.push(value)
+  searchQuery.value = ''
+}
 </script>
 
 <style scoped>
@@ -117,6 +231,7 @@ const favoriteTools = computed(() => {
   align-items: center;
   gap: var(--spacing-md);
   min-width: 0;
+  flex: 1;
 }
 
 .menu-btn {
@@ -133,7 +248,10 @@ const favoriteTools = computed(() => {
 }
 
 .logo-icon {
-  font-size: 24px;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  background: transparent;
 }
 
 .quick-bookmarks {
@@ -141,7 +259,7 @@ const favoriteTools = computed(() => {
   align-items: center;
   gap: 6px;
   min-width: 0;
-  max-width: min(52vw, 720px);
+  max-width: min(40vw, 600px);
   overflow-x: auto;
   padding: 2px 0;
 }
@@ -162,11 +280,14 @@ const favoriteTools = computed(() => {
   text-overflow: ellipsis;
 }
 
-.bookmark-link:hover,
+.bookmark-link:hover {
+  color: var(--color-text-primary);
+  border-color: var(--color-primary);
+}
+
 .bookmark-link.active {
-  color: white;
-  background: var(--color-accent);
-  border-color: var(--color-accent);
+  color: var(--color-primary);
+  border-color: var(--color-primary);
 }
 
 .header-right {
@@ -174,6 +295,14 @@ const favoriteTools = computed(() => {
   align-items: center;
   gap: var(--spacing-md);
   flex: 0 0 auto;
+}
+
+.search-wrapper {
+  width: 220px;
+}
+
+.tool-search {
+  width: 100%;
 }
 
 .github-link {
@@ -202,15 +331,35 @@ const favoriteTools = computed(() => {
   font-weight: 500;
 }
 
+@media (max-width: 1100px) {
+  .search-wrapper {
+    width: 180px;
+  }
+
+  .quick-bookmarks {
+    max-width: 30vw;
+  }
+}
+
 @media (max-width: 900px) {
   .quick-bookmarks {
-    max-width: 36vw;
+    max-width: 20vw;
+  }
+}
+
+@media (max-width: 768px) {
+  .search-wrapper {
+    width: 160px;
   }
 }
 
 @media (max-width: 680px) {
   .quick-bookmarks {
     display: none;
+  }
+
+  .search-wrapper {
+    width: 140px;
   }
 }
 </style>

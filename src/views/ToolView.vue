@@ -1,24 +1,5 @@
 <template>
   <div class="tool-view">
-    <n-button
-      v-if="tool"
-      circle
-      quaternary
-      size="large"
-      class="favorite-button"
-      :class="{ active: isFavorite }"
-      :title="isFavorite ? '取消收藏' : '收藏工具'"
-      @click="toggleFavorite"
-    >
-      <template #icon>
-        <n-icon size="22">
-          <svg viewBox="0 0 24 24">
-            <path :fill="isFavorite ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M12 2.8L14.9 8.68L21.4 9.63L16.7 14.21L17.81 20.68L12 17.62L6.19 20.68L7.3 14.21L2.6 9.63L9.1 8.68L12 2.8Z" />
-          </svg>
-        </n-icon>
-      </template>
-    </n-button>
-
     <component :is="toolComponent" v-if="toolComponent" />
 
     <div v-if="!tool" class="not-found">
@@ -36,9 +17,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, watch, provide } from 'vue'
 import { useRouter } from 'vue-router'
-import { NResult, NButton, NIcon } from 'naive-ui'
+import { NResult, NButton } from 'naive-ui'
 import { getToolById } from '@/tools'
 import { useAppStore } from '@/stores/app'
 
@@ -55,6 +36,11 @@ const isFavorite = computed(() => appStore.isFavorite(props.toolId))
 const toggleFavorite = () => {
   appStore.toggleFavorite(props.toolId)
 }
+
+// 通过 provide 提供给子组件使用
+provide('toolId', props.toolId)
+provide('isFavorite', isFavorite)
+provide('toggleFavorite', toggleFavorite)
 
 const toolComponent = computed(() => {
   if (!tool.value) return null
@@ -104,20 +90,6 @@ watch(
   height: 100%;
   overflow: auto;
   position: relative;
-}
-
-.favorite-button {
-  position: absolute;
-  top: 20px;
-  right: 24px;
-  z-index: 5;
-  color: var(--color-text-tertiary);
-  background: var(--color-bg-secondary);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-}
-
-.favorite-button.active {
-  color: #f5a524;
 }
 
 .not-found {

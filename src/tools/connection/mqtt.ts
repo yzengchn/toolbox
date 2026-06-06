@@ -17,6 +17,7 @@ export interface MqttConnectOptions {
   password: string
   cleanSession: boolean
   keepAlive: number
+  protocolVersion: number
 }
 
 export interface MqttPublishOptions {
@@ -35,9 +36,18 @@ const connackMessages: Record<number, string> = {
 }
 
 export function buildConnectPacket(options: MqttConnectOptions): ArrayBuffer {
+  // 根据协议版本选择协议名称和版本号
+  let protocolName = 'MQTT'
+  let protocolLevel = options.protocolVersion
+
+  // MQTT 3.1 使用 "MQIsdp" 作为协议名
+  if (options.protocolVersion === 3) {
+    protocolName = 'MQIsdp'
+  }
+
   const variableHeader = concatBytes(
-    encodeString('MQTT'),
-    Uint8Array.of(4),
+    encodeString(protocolName),
+    Uint8Array.of(protocolLevel),
     Uint8Array.of(getConnectFlags(options)),
     encodeUint16(options.keepAlive)
   )

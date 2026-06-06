@@ -1,9 +1,9 @@
 <template>
   <div class="tool-container">
-    <div class="tool-header">
-      <h2>哈希计算</h2>
-      <p class="description">计算文本或文件的 MD5、SHA1、SHA256、SHA512 摘要</p>
-    </div>
+    <ToolHeader
+      title="哈希计算"
+      description="计算文本或文件的 MD5、SHA1、SHA256、SHA512 摘要"
+    />
 
     <div class="tool-content">
       <n-grid cols="1 m:2" responsive="screen" :x-gap="16" :y-gap="16">
@@ -46,24 +46,25 @@
                 </n-tab-pane>
               </n-tabs>
 
+              <div>
+                <n-text strong style="display: block; margin-bottom: 8px">哈希算法</n-text>
+                <n-radio-group v-model:value="algorithm">
+                  <n-space :size="16">
+                    <n-radio value="MD5">MD5</n-radio>
+                    <n-radio value="SHA1">SHA1</n-radio>
+                    <n-radio value="SHA256">SHA256</n-radio>
+                    <n-radio value="SHA512">SHA512</n-radio>
+                  </n-space>
+                </n-radio-group>
+              </div>
+
               <n-space wrap align="center">
-                <n-select
-                  v-model:value="algorithm"
-                  :options="algorithmOptions"
-                  style="width: 180px"
-                />
                 <n-checkbox v-model:checked="uppercase">
                   大写输出
                 </n-checkbox>
               </n-space>
 
               <n-space wrap>
-                <n-button type="primary" @click="handleCalculate">
-                  计算
-                </n-button>
-                <n-button @click="handlePaste" :disabled="mode !== 'text'">
-                  粘贴
-                </n-button>
                 <n-button @click="handleClear">
                   清空
                 </n-button>
@@ -88,9 +89,13 @@
               </n-button>
             </template>
 
-            <n-empty v-if="!displayOutput && !error" description="输入内容后点击计算" />
+            <n-empty v-if="!displayOutput && !error && !isCalculating" description="输入内容后自动计算" />
 
-            <n-space v-else vertical :size="16">
+            <n-spin v-if="isCalculating" size="large" style="display: flex; justify-content: center; padding: 40px 0">
+              <template #description>计算中...</template>
+            </n-spin>
+
+            <n-space v-else-if="displayOutput || error" vertical :size="16">
               <n-descriptions v-if="displayOutput" :column="1" bordered label-placement="left">
                 <n-descriptions-item label="算法">
                   {{ algorithm }}
@@ -120,8 +125,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import type { SelectOption } from 'naive-ui'
+import { computed, ref, watch } from 'vue'
 import {
   NAlert,
   NButton,
@@ -133,22 +137,20 @@ import {
   NGrid,
   NGridItem,
   NInput,
-  NSelect,
+  NRadio,
+  NRadioGroup,
   NSpace,
+  NSpin,
   NTabPane,
-  NTabs
+  NTabs,
+  NText
 } from 'naive-ui'
 import { useClipboard } from '@/composables/useClipboard'
 import { computeFileHash, computeHash, type HashAlgorithm } from './utils'
+import ToolHeader from '@/components/ToolHeader.vue'
+import { formatFileSize } from '@/utils/format'
 
-const { copy, paste } = useClipboard()
-
-const algorithmOptions: SelectOption[] = [
-  { label: 'MD5', value: 'MD5' },
-  { label: 'SHA1', value: 'SHA1' },
-  { label: 'SHA256', value: 'SHA256' },
-  { label: 'SHA512', value: 'SHA512' }
-]
+const { copy } = useClipboard()
 
 const mode = ref<'text' | 'file'>('text')
 const algorithm = ref<HashAlgorithm>('SHA256')
@@ -157,6 +159,7 @@ const textInput = ref('')
 const selectedFile = ref<File | null>(null)
 const rawOutput = ref('')
 const error = ref('')
+const isCalculating = ref(false)
 const fileInputRef = ref<HTMLInputElement | null>(null)
 
 const displayOutput = computed(() => {
@@ -174,22 +177,6 @@ const sourceLabel = computed(() => {
 
   return `文本 (${textInput.value.length} 字符)`
 })
-
-const formatFileSize = (size: number): string => {
-  if (size < 1024) {
-    return `${size} B`
-  }
-
-  if (size < 1024 * 1024) {
-    return `${(size / 1024).toFixed(2)} KB`
-  }
-
-  if (size < 1024 * 1024 * 1024) {
-    return `${(size / 1024 / 1024).toFixed(2)} MB`
-  }
-
-  return `${(size / 1024 / 1024 / 1024).toFixed(2)} GB`
-}
 
 const clearSelectedFile = () => {
   selectedFile.value = null
@@ -209,13 +196,13 @@ const handleFileChange = (event: Event) => {
   error.value = ''
 }
 
-const handleCalculate = async () => {
+const calculateHash = async () => {
   error.value = ''
+  isCalculating.value = true
 
   try {
     if (mode.value === 'text') {
       if (!textInput.value) {
-        error.value = '请输入要计算哈希的文本'
         rawOutput.value = ''
         return
       }
@@ -225,7 +212,6 @@ const handleCalculate = async () => {
     }
 
     if (!selectedFile.value) {
-      error.value = '请先选择文件'
       rawOutput.value = ''
       return
     }
@@ -234,12 +220,9 @@ const handleCalculate = async () => {
   } catch (hashError) {
     rawOutput.value = ''
     error.value = (hashError as Error).message || '哈希计算失败'
+  } finally {
+    isCalculating.value = false
   }
-}
-
-const handlePaste = async () => {
-  if (mode.value !== 'text') return
-  textInput.value = await paste()
 }
 
 const handleClear = () => {
@@ -248,28 +231,25 @@ const handleClear = () => {
   rawOutput.value = ''
   error.value = ''
 }
+
+// 实时监听输入变化
+watch([textInput, algorithm, mode], () => {
+  if (mode.value === 'text') {
+    calculateHash()
+  }
+})
+
+// 监听文件和算法变化
+watch([selectedFile, algorithm], () => {
+  if (mode.value === 'file' && selectedFile.value) {
+    calculateHash()
+  }
+})
 </script>
 
 <style scoped>
 .tool-container {
   padding: var(--spacing-lg);
-}
-
-.tool-header {
-  margin-bottom: var(--spacing-xl);
-}
-
-.tool-header h2 {
-  font-size: var(--font-size-2xl, 28px);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-xs) 0;
-}
-
-.description {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  margin: 0;
 }
 
 .tool-content {

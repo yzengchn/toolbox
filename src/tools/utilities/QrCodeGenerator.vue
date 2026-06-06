@@ -1,80 +1,76 @@
 <template>
   <div class="tool-container">
-    <div class="tool-header">
-      <h2>QR 码生成器</h2>
-      <p class="description">生成二维码图片</p>
-    </div>
+    <ToolHeader
+      title="二维码生成器"
+      description="生成二维码图片"
+    />
 
     <div class="tool-content">
-      <n-card title="输入内容">
-        <n-space vertical :size="16">
-          <n-input
-            v-model:value="content"
-            type="textarea"
-            placeholder="输入要生成 QR 码的内容 (文本、URL、联系人信息等)"
-            :rows="6"
-            clearable
-          />
+      <n-grid cols="1 m:2" responsive="screen" :x-gap="16" :y-gap="16">
+        <n-grid-item>
+          <n-card title="输入内容" class="input-card">
+            <n-space vertical :size="16">
+              <n-input
+                v-model:value="content"
+                type="textarea"
+                placeholder="输入要生成二维码的内容 (文本、URL、联系人信息等)"
+                :rows="8"
+                clearable
+              />
 
-          <n-space>
-            <n-button type="primary" @click="handleGenerate" :disabled="!content">
-              生成 QR 码
-            </n-button>
-            <n-button @click="handleClear">
-              清空
-            </n-button>
-          </n-space>
-        </n-space>
-      </n-card>
+              <n-space>
+                <n-button @click="handleClear">
+                  清空
+                </n-button>
+              </n-space>
+            </n-space>
+          </n-card>
 
-      <n-alert v-if="error" type="error" style="margin-top: 16px">
-        {{ error }}
-      </n-alert>
+          <n-alert v-if="error" type="error" style="margin-top: 16px">
+            {{ error }}
+          </n-alert>
+        </n-grid-item>
 
-      <n-card v-if="qrCodeUrl" title="QR 码预览" style="margin-top: 16px">
-        <div class="qrcode-container">
-          <img :src="qrCodeUrl" alt="QR Code" class="qrcode-image" />
-        </div>
-        <template #footer>
-          <n-space>
-            <n-button @click="handleDownload">
-              下载 PNG
-            </n-button>
-            <n-button @click="handleCopyImage">
-              复制图片
-            </n-button>
-          </n-space>
-        </template>
-      </n-card>
+        <n-grid-item>
+          <div class="preview-wrapper">
+            <n-empty v-if="!qrCodeUrl" description="输入内容后自动生成" style="padding: 60px 0" />
+            <div v-else class="qrcode-container">
+              <img :src="qrCodeUrl" alt="QR Code" class="qrcode-image" />
+            </div>
+            <n-space v-if="qrCodeUrl" justify="center" style="margin-top: 16px">
+              <n-button @click="handleDownload">
+                下载 PNG
+              </n-button>
+              <n-button @click="handleCopyImage">
+                复制图片
+              </n-button>
+            </n-space>
+          </div>
+        </n-grid-item>
+      </n-grid>
 
       <n-card title="配置选项" style="margin-top: 16px">
         <n-space vertical :size="16">
-          <div>
-            <n-text strong>尺寸 (像素)</n-text>
-            <n-slider v-model:value="options.width" :min="128" :max="1024" :step="32" style="margin-top: 8px" />
-            <n-text depth="3" style="font-size: 12px">{{ options.width }} x {{ options.width }}</n-text>
+          <div class="config-row">
+            <n-text strong class="config-label">尺寸 (像素)</n-text>
+            <n-slider v-model:value="options.width" :min="128" :max="1024" :step="32" class="config-slider" />
+            <n-text depth="3" class="config-value">{{ options.width }} x {{ options.width }}</n-text>
           </div>
 
-          <div>
-            <n-text strong>容错等级</n-text>
-            <n-radio-group v-model:value="options.errorCorrectionLevel" style="margin-top: 8px">
-              <n-space>
+          <div class="config-row">
+            <n-text strong class="config-label">容错等级</n-text>
+            <n-radio-group v-model:value="options.errorCorrectionLevel">
+              <n-space :size="16">
                 <n-radio value="L">低 (7%)</n-radio>
                 <n-radio value="M">中 (15%)</n-radio>
                 <n-radio value="Q">高 (25%)</n-radio>
                 <n-radio value="H">最高 (30%)</n-radio>
               </n-space>
             </n-radio-group>
-          </div>
-
-          <div>
-            <n-text strong>前景色</n-text>
-            <n-input v-model:value="options.color.dark" placeholder="#000000" style="margin-top: 8px" />
-          </div>
-
-          <div>
-            <n-text strong>背景色</n-text>
-            <n-input v-model:value="options.color.light" placeholder="#FFFFFF" style="margin-top: 8px" />
+            <n-text strong style="margin-left: 24px; margin-right: 8px">前景色</n-text>
+            <n-input v-model:value="options.color.dark" placeholder="#000000" style="width: 120px" />
+            <n-text strong style="margin-left: 16px; margin-right: 8px">背景色</n-text>
+            <n-input v-model:value="options.color.light" placeholder="#FFFFFF" style="width: 120px" />
           </div>
         </n-space>
       </n-card>
@@ -97,9 +93,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
-import { NCard, NInput, NSlider, NRadioGroup, NRadio, NButton, NSpace, NAlert, NText, useMessage } from 'naive-ui'
+import { ref, reactive, watch } from 'vue'
+import { NCard, NInput, NSlider, NRadioGroup, NRadio, NButton, NSpace, NAlert, NText, NGrid, NGridItem, NEmpty, useMessage } from 'naive-ui'
 import QRCode from 'qrcode'
+import ToolHeader from '@/components/ToolHeader.vue'
+import { debounce } from '@/utils/debounce'
 
 const message = useMessage()
 
@@ -108,7 +106,7 @@ const qrCodeUrl = ref('')
 const error = ref('')
 
 const options = reactive({
-  width: 256,
+  width: 320,
   errorCorrectionLevel: 'M' as 'L' | 'M' | 'Q' | 'H',
   color: {
     dark: '#000000',
@@ -118,7 +116,8 @@ const options = reactive({
 
 const handleGenerate = async () => {
   if (!content.value.trim()) {
-    error.value = '请输入内容'
+    qrCodeUrl.value = ''
+    error.value = ''
     return
   }
 
@@ -133,6 +132,7 @@ const handleGenerate = async () => {
       }
     })
   } catch (err) {
+    qrCodeUrl.value = ''
     error.value = '生成失败: ' + (err as Error).message
   }
 }
@@ -163,28 +163,19 @@ const handleClear = () => {
   qrCodeUrl.value = ''
   error.value = ''
 }
+
+// 创建防抖版本用于实时生成
+const debouncedHandleGenerate = debounce(handleGenerate, 300)
+
+// 实时监听输入和配置变化
+watch([content, () => options.width, () => options.errorCorrectionLevel, () => options.color.dark, () => options.color.light], () => {
+  debouncedHandleGenerate()
+})
 </script>
 
 <style scoped>
 .tool-container {
   padding: var(--spacing-lg);
-}
-
-.tool-header {
-  margin-bottom: var(--spacing-xl);
-}
-
-.tool-header h2 {
-  font-size: var(--font-size-2xl);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-xs) 0;
-}
-
-.description {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  margin: 0;
 }
 
 .tool-content {
@@ -198,6 +189,7 @@ const handleClear = () => {
   padding: var(--spacing-xl);
   background: var(--color-bg-tertiary);
   border-radius: var(--radius-md);
+  min-height: 300px;
 }
 
 .qrcode-image {
@@ -205,4 +197,45 @@ const handleClear = () => {
   height: auto;
   border-radius: var(--radius-sm);
 }
+
+.config-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.config-label {
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.config-slider {
+  flex: 1;
+  min-width: 200px;
+}
+
+.config-value {
+  font-size: 12px;
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.preview-wrapper {
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  min-height: 329px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.input-card {
+  height: 100%;
+}
+
+.input-card :deep(.n-card__content) {
+  height: 100%;
+}
+
 </style>

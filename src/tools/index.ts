@@ -21,6 +21,12 @@ export const allTools: Tool[] = [
 // 按分类组织工具
 export const toolCategories: ToolCategoryInfo[] = [
   {
+    id: 'utilities',
+    name: '实用工具',
+    icon: 'mdi:toolbox-outline',
+    tools: allTools.filter(t => t.category === 'utilities')
+  },
+  {
     id: 'encoding',
     name: '编码工具',
     icon: 'mdi:lock-outline',
@@ -39,22 +45,16 @@ export const toolCategories: ToolCategoryInfo[] = [
     tools: allTools.filter(t => t.category === 'time')
   },
   {
-    id: 'utilities',
-    name: '实用工具',
-    icon: 'mdi:toolbox-outline',
-    tools: allTools.filter(t => t.category === 'utilities')
+    id: 'network',
+    name: '网络工具',
+    icon: 'mdi:network-outline',
+    tools: allTools.filter(t => t.category === 'network')
   },
   {
     id: 'vehicle-iot',
     name: '车联网工具',
     icon: 'mdi:car-connected',
     tools: allTools.filter(t => t.category === 'vehicle-iot')
-  },
-  {
-    id: 'network',
-    name: '网络工具',
-    icon: 'mdi:network-outline',
-    tools: allTools.filter(t => t.category === 'network')
   },
   {
     id: 'connection',

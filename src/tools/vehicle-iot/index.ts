@@ -1,6 +1,7 @@
 import type { Tool } from '@/types'
 import VehicleIotTool from './VehicleIotTool.vue'
 import GeoHashTool from './GeoHashTool.vue'
+import TrackMapViewer from './TrackMapViewer.vue'
 
 export const vehicleIotTools: Tool[] = [
   {
@@ -22,6 +23,16 @@ export const vehicleIotTools: Tool[] = [
     keywords: ['geohash', '经纬度', '地图', '定位', 'gps', '坐标'],
     component: GeoHashTool,
     path: '/tool/geohash-tool'
+  },
+  {
+    id: 'track-map-viewer',
+    name: '轨迹地图',
+    description: '解析经纬度列表并在地图上绘制轨迹',
+    icon: 'mdi:map-marker-path',
+    category: 'vehicle-iot',
+    keywords: ['map', 'track', 'gps', 'coordinates', '地图', '轨迹', '经纬度', '坐标'],
+    component: TrackMapViewer,
+    path: '/tool/track-map-viewer'
   }
 ]
 

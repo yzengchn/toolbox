@@ -140,7 +140,8 @@ const appStore = useAppStore()
 }
 
 .tool-item.active .tool-icon {
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: var(--color-accent);
+  color: white;
 }
 
 .tool-item:hover {
@@ -149,8 +150,8 @@ const appStore = useAppStore()
 }
 
 .tool-item.active {
-  background-color: var(--color-accent);
-  color: white;
+  background-color: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  color: var(--color-accent);
 }
 
 .tool-item.active::before {
@@ -160,7 +161,7 @@ const appStore = useAppStore()
   top: 0;
   bottom: 0;
   width: 3px;
-  background-color: currentColor;
+  background-color: var(--color-accent);
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 }
 

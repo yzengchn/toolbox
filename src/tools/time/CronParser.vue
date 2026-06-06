@@ -1,9 +1,9 @@
 <template>
   <div class="tool-container">
-    <div class="tool-header">
-      <h2>Cron 表达式解析</h2>
-      <p class="description">校验 Cron 表达式，查看标准化结果和接下来几次执行时间</p>
-    </div>
+    <ToolHeader
+      title="Cron 表达式解析"
+      description="校验 Cron 表达式并查看标准化结果与下一次执行时间"
+    />
 
     <div class="tool-content">
       <n-grid cols="1 m:2" responsive="screen" :x-gap="16" :y-gap="16">
@@ -14,13 +14,9 @@
                 v-model:value="expression"
                 placeholder="输入 5 位或 6 位 Cron 表达式，例如 0 9 * * 1-5"
                 clearable
-                @keyup.enter="handleParse"
               />
 
               <n-space wrap>
-                <n-button type="primary" @click="handleParse">
-                  解析
-                </n-button>
                 <n-button @click="applyTemplate('0 9 * * 1-5')">
                   工作日 09:00
                 </n-button>
@@ -57,7 +53,7 @@
               </n-button>
             </template>
 
-            <n-empty v-if="!result && !error" description="输入表达式后点击解析" />
+            <n-empty v-if="!result && !error" description="输入表达式后自动解析" />
 
             <n-space v-else-if="result" vertical :size="16">
               <n-descriptions :column="1" bordered label-placement="left">
@@ -94,7 +90,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import {
   NAlert,
   NButton,
@@ -109,6 +105,7 @@ import {
 } from 'naive-ui'
 import { useClipboard } from '@/composables/useClipboard'
 import { parseCronExpression, type CronParseResult } from './utils'
+import ToolHeader from '@/components/ToolHeader.vue'
 
 const { copy } = useClipboard()
 
@@ -118,6 +115,11 @@ const result = ref<CronParseResult | null>(null)
 
 const handleParse = () => {
   error.value = ''
+
+  if (!expression.value.trim()) {
+    result.value = null
+    return
+  }
 
   try {
     result.value = parseCronExpression(expression.value)
@@ -129,7 +131,6 @@ const handleParse = () => {
 
 const applyTemplate = (value: string) => {
   expression.value = value
-  handleParse()
 }
 
 const handleClear = () => {
@@ -149,29 +150,15 @@ const handleCopyResult = async () => {
   ].join('\n'))
 }
 
-handleParse()
+// 实时监听表达式变化
+watch(expression, () => {
+  handleParse()
+}, { immediate: true })
 </script>
 
 <style scoped>
 .tool-container {
   padding: var(--spacing-lg);
-}
-
-.tool-header {
-  margin-bottom: var(--spacing-xl);
-}
-
-.tool-header h2 {
-  font-size: var(--font-size-2xl, 28px);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-xs) 0;
-}
-
-.description {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  margin: 0;
 }
 
 .tool-content {

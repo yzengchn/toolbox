@@ -1,9 +1,9 @@
 <template>
   <div class="tool-container">
-    <div class="tool-header">
-      <h2>JSON 格式化</h2>
-      <p class="description">格式化、压缩和验证 JSON 数据</p>
-    </div>
+    <ToolHeader
+      title="JSON 格式化"
+      description="格式化、压缩和验证 JSON 数据"
+    />
 
     <div class="tool-content">
       <div class="editor-layout">
@@ -15,7 +15,7 @@
               placeholder="输入 JSON 数据"
               :rows="15"
               clearable
-              @input="handleInput"
+              @input="debouncedHandleInput"
             />
 
             <div class="controls">
@@ -56,12 +56,12 @@
                       :max="8"
                       size="small"
                       style="width: 80px"
-                      @update:value="handleInput"
+                      @update:value="debouncedHandleInput"
                     />
                   </div>
 
                   <div class="config-group config-group--checkbox">
-                    <n-checkbox v-model:checked="sortKeys" @update:checked="handleInput">
+                    <n-checkbox v-model:checked="sortKeys" @update:checked="debouncedHandleInput">
                       排序键
                     </n-checkbox>
                   </div>
@@ -108,9 +108,12 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { NCard, NInput, NInputNumber, NCheckbox, NButton, NButtonGroup, NDivider, NSpace, NAlert, NText, useMessage } from 'naive-ui'
+import { NCard, NInput, NInputNumber, NCheckbox, NButton, NButtonGroup, NDivider, NSpace, NAlert, NText } from 'naive-ui'
+import ToolHeader from '@/components/ToolHeader.vue'
+import { useClipboard } from '@/composables/useClipboard'
+import { debounce } from '@/utils/debounce'
 
-const message = useMessage()
+const { copy } = useClipboard()
 
 const input = ref('')
 const output = ref('')
@@ -137,6 +140,9 @@ const handleInput = () => {
     output.value = ''
   }
 }
+
+// 创建防抖版本用于实时输入
+const debouncedHandleInput = debounce(handleInput, 300)
 
 const handleFormat = () => {
   error.value = ''
@@ -239,13 +245,8 @@ const handleClear = () => {
   valid.value = false
 }
 
-const handleCopyOutput = async () => {
-  try {
-    await navigator.clipboard.writeText(output.value)
-    message.success('已复制到剪贴板')
-  } catch (err) {
-    message.error('复制失败')
-  }
+const handleCopyOutput = () => {
+  copy(output.value)
 }
 </script>
 
@@ -255,23 +256,6 @@ const handleCopyOutput = async () => {
   height: 100%;
   display: flex;
   flex-direction: column;
-}
-
-.tool-header {
-  margin-bottom: var(--spacing-xl);
-}
-
-.tool-header h2 {
-  font-size: var(--font-size-2xl);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-xs) 0;
-}
-
-.description {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  margin: 0;
 }
 
 .tool-content {

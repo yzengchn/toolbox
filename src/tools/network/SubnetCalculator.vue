@@ -1,9 +1,9 @@
 <template>
   <div class="tool-container">
-    <div class="tool-header">
-      <h2>CIDR 网段计算器</h2>
-      <p class="description">按行批量计算 IPv4 CIDR 网段的网络地址、广播地址、可用主机数等信息</p>
-    </div>
+    <ToolHeader
+      title="CIDR 网段计算器"
+      description="计算 IPv4 CIDR 网段的网络地址、广播地址、可用主机数等信息"
+    />
 
     <div class="tool-content">
       <n-grid cols="1 l:2" responsive="screen" :x-gap="16" :y-gap="16" class="top-grid">
@@ -320,23 +320,6 @@ handleCalculate()
 <style scoped>
 .tool-container {
   padding: var(--spacing-lg);
-}
-
-.tool-header {
-  margin-bottom: var(--spacing-xl);
-}
-
-.tool-header h2 {
-  font-size: var(--font-size-2xl);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-xs) 0;
-}
-
-.description {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  margin: 0;
 }
 
 .tool-content {

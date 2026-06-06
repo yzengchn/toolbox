@@ -1,9 +1,9 @@
 <template>
   <div class="tool-container">
-    <div class="tool-header">
-      <h2>经纬度 GeoHash</h2>
-      <p class="description">经纬度地图展示和 GeoHash 编码解码</p>
-    </div>
+    <ToolHeader
+      title="经纬度 GeoHash"
+      description="经纬度地图展示和 GeoHash 编码解码"
+    />
 
     <div class="tool-content">
       <div class="workspace-grid">
@@ -115,14 +115,15 @@ import {
   NInput,
   NSlider,
   NSpace,
-  NText,
-  useMessage
+  NText
 } from 'naive-ui'
 import * as L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import * as geohash from 'ngeohash'
+import ToolHeader from '@/components/ToolHeader.vue'
+import { useClipboard } from '@/composables/useClipboard'
 
-const message = useMessage()
+const { copy } = useClipboard()
 
 // 地图和 GeoHash 相关
 const mapContainer = ref<HTMLElement | null>(null)
@@ -304,13 +305,8 @@ const handleClearMap = () => {
   mapError.value = ''
 }
 
-const copyGeohash = async () => {
-  try {
-    await navigator.clipboard.writeText(geohashResult.value)
-    message.success('已复制到剪贴板')
-  } catch (err) {
-    message.error('复制失败')
-  }
+const copyGeohash = () => {
+  copy(geohashResult.value)
 }
 
 onMounted(() => {
@@ -333,23 +329,6 @@ onUnmounted(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-}
-
-.tool-header {
-  margin-bottom: var(--spacing-xl);
-}
-
-.tool-header h2 {
-  font-size: var(--font-size-2xl);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-xs) 0;
-}
-
-.description {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  margin: 0;
 }
 
 .tool-content {
