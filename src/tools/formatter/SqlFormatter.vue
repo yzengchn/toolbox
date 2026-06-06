@@ -1,0 +1,305 @@
+<template>
+  <div class="tool-container">
+    <div class="tool-header">
+      <h2>SQL 格式化</h2>
+      <p class="description">格式化 SQL 查询语句</p>
+    </div>
+
+    <div class="tool-content">
+      <n-card class="editor-panel">
+        <div class="editor-body">
+          <div class="controls">
+            <n-space :size="16" wrap>
+              <n-button-group>
+                <n-button type="primary" @click="handleFormat">
+                  格式化
+                </n-button>
+                <n-button @click="handleCompress">
+                  压缩
+                </n-button>
+              </n-button-group>
+
+              <n-button @click="handleClear">
+                清空
+              </n-button>
+
+              <n-divider vertical />
+
+              <div class="format-configs">
+                <div class="config-group">
+                  <n-text strong style="font-size: 13px">方言:</n-text>
+                  <n-select
+                    v-model:value="language"
+                    :options="languageOptions"
+                    size="small"
+                    style="width: 150px"
+                  />
+                </div>
+
+                <div class="config-group">
+                  <n-text strong style="font-size: 13px">缩进:</n-text>
+                  <n-input-number
+                    v-model:value="indentSize"
+                    :min="0"
+                    :max="8"
+                    size="small"
+                    style="width: 80px"
+                  />
+                </div>
+
+                <div class="config-group config-group--checkbox">
+                  <n-checkbox v-model:checked="uppercase">
+                    关键字大写
+                  </n-checkbox>
+                </div>
+              </div>
+            </n-space>
+          </div>
+
+          <div class="editor-input-wrap">
+            <n-button
+              text
+              size="small"
+              class="copy-button"
+              :disabled="!input"
+              @click="handleCopyInput"
+            >
+              复制
+            </n-button>
+
+            <n-input
+              v-model:value="input"
+              type="textarea"
+              placeholder="输入 SQL 语句"
+              :rows="15"
+              class="editor-textarea"
+              clearable
+            />
+          </div>
+        </div>
+      </n-card>
+
+      <n-alert v-if="error" type="error" style="margin-top: 16px">
+        {{ error }}
+      </n-alert>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import { NCard, NInput, NInputNumber, NSelect, NCheckbox, NButton, NButtonGroup, NDivider, NSpace, NAlert, NText, useMessage } from 'naive-ui'
+import { format } from 'sql-formatter'
+
+const message = useMessage()
+
+const input = ref('')
+const error = ref('')
+const language = ref('sql')
+const indentSize = ref(2)
+const uppercase = ref(true)
+
+const languageOptions = [
+  { label: 'SQL (通用)', value: 'sql' },
+  { label: 'MySQL', value: 'mysql' },
+  { label: 'PostgreSQL', value: 'postgresql' },
+  { label: 'SQLite', value: 'sqlite' },
+  { label: 'MariaDB', value: 'mariadb' },
+  { label: 'SQL Server', value: 'tsql' },
+  { label: 'Oracle PL/SQL', value: 'plsql' }
+]
+
+const handleFormat = () => {
+  error.value = ''
+
+  if (!input.value.trim()) {
+    error.value = '请输入 SQL 语句'
+    return
+  }
+
+  try {
+    input.value = format(input.value, {
+      language: language.value as any,
+      tabWidth: indentSize.value,
+      keywordCase: uppercase.value ? 'upper' : 'lower'
+    })
+  } catch (err) {
+    error.value = '格式化失败: ' + (err as Error).message
+  }
+}
+
+const handleCompress = () => {
+  error.value = ''
+
+  if (!input.value.trim()) {
+    error.value = '请输入 SQL 语句'
+    return
+  }
+
+  input.value = input.value.replace(/\s+/g, ' ').trim()
+}
+
+const handleClear = () => {
+  input.value = ''
+  error.value = ''
+}
+
+const handleCopyInput = async () => {
+  try {
+    await navigator.clipboard.writeText(input.value)
+    message.success('已复制到剪贴板')
+  } catch (err) {
+    message.error('复制失败')
+  }
+}
+</script>
+
+<style scoped>
+.tool-container {
+  padding: var(--spacing-lg);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.tool-header {
+  margin-bottom: var(--spacing-xl);
+}
+
+.tool-header h2 {
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.description {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  margin: 0;
+}
+
+.tool-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.editor-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.editor-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  min-height: 0;
+}
+
+.editor-panel :deep(.n-card__content) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 16px;
+}
+
+.editor-input-wrap {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.copy-button {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  z-index: 1;
+}
+
+.editor-textarea {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 100%;
+  min-height: 0;
+}
+
+.editor-textarea :deep(.n-input) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  height: 100%;
+}
+
+.editor-textarea :deep(.n-input__state-border),
+.editor-textarea :deep(.n-input__state-border--disabled) {
+  height: 100%;
+}
+
+.editor-textarea :deep(.n-input-wrapper),
+.editor-textarea :deep(.n-input__textarea) {
+  flex: 1;
+  height: 100%;
+}
+
+.editor-textarea :deep(.n-input__textarea-el) {
+  height: 100% !important;
+  min-height: 400px;
+  padding-top: 34px;
+}
+
+.controls {
+  padding: var(--spacing-md) 0;
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.format-configs {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  vertical-align: middle;
+  flex-wrap: wrap;
+}
+
+.config-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  min-height: 34px;
+  padding: 4px 12px;
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+}
+
+.config-group--checkbox {
+  justify-content: center;
+}
+
+.config-group--checkbox :deep(.n-checkbox) {
+  align-items: center;
+}
+
+.config-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+:deep(.n-button) {
+  font-weight: 500;
+}
+
+:deep(.n-checkbox) {
+  font-weight: 500;
+}
+</style>

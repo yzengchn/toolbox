@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# 主要页面
+Sitemap: /sitemap.xml
+
+# 爬虫频率建议
+Crawl-delay: 1
