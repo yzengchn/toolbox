@@ -2,121 +2,121 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <!-- 首页 -->
   <url>
-    <loc>https://yourdomain.com/</loc>
+    <loc>https://tools.neocockpit.cn/</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
 
   <!-- 编码工具 -->
   <url>
-    <loc>https://yourdomain.com/tool/base64-encoder</loc>
+    <loc>https://tools.neocockpit.cn/tool/base64-encoder</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://yourdomain.com/tool/hash-calculator</loc>
+    <loc>https://tools.neocockpit.cn/tool/hash-calculator</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://yourdomain.com/tool/jwt-decoder</loc>
+    <loc>https://tools.neocockpit.cn/tool/jwt-decoder</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <!-- 格式化工具 -->
   <url>
-    <loc>https://yourdomain.com/tool/json-formatter</loc>
+    <loc>https://tools.neocockpit.cn/tool/json-formatter</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://yourdomain.com/tool/xml-formatter</loc>
+    <loc>https://tools.neocockpit.cn/tool/xml-formatter</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://yourdomain.com/tool/sql-formatter</loc>
+    <loc>https://tools.neocockpit.cn/tool/sql-formatter</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <!-- 时间工具 -->
   <url>
-    <loc>https://yourdomain.com/tool/timestamp-converter</loc>
+    <loc>https://tools.neocockpit.cn/tool/timestamp-converter</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://yourdomain.com/tool/cron-parser</loc>
+    <loc>https://tools.neocockpit.cn/tool/cron-parser</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <!-- 实用工具 -->
   <url>
-    <loc>https://yourdomain.com/tool/uuid-generator</loc>
+    <loc>https://tools.neocockpit.cn/tool/uuid-generator</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://yourdomain.com/tool/password-generator</loc>
+    <loc>https://tools.neocockpit.cn/tool/password-generator</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://yourdomain.com/tool/qrcode-generator</loc>
+    <loc>https://tools.neocockpit.cn/tool/qrcode-generator</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://yourdomain.com/tool/color-converter</loc>
+    <loc>https://tools.neocockpit.cn/tool/color-converter</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <!-- 车联网工具 -->
   <url>
-    <loc>https://yourdomain.com/tool/vehicle-iot-tool</loc>
+    <loc>https://tools.neocockpit.cn/tool/vehicle-iot-tool</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://yourdomain.com/tool/geohash-tool</loc>
+    <loc>https://tools.neocockpit.cn/tool/geohash-tool</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <!-- 网络工具 -->
   <url>
-    <loc>https://yourdomain.com/tool/url-encoder</loc>
+    <loc>https://tools.neocockpit.cn/tool/url-encoder</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://yourdomain.com/tool/http-status</loc>
+    <loc>https://tools.neocockpit.cn/tool/http-status</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://yourdomain.com/tool/ip-lookup</loc>
+    <loc>https://tools.neocockpit.cn/tool/ip-lookup</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://yourdomain.com/tool/subnet-calculator</loc>
+    <loc>https://tools.neocockpit.cn/tool/subnet-calculator</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <!-- 连接工具 -->
   <url>
-    <loc>https://yourdomain.com/tool/websocket-client</loc>
+    <loc>https://tools.neocockpit.cn/tool/websocket-client</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://yourdomain.com/tool/mqtt-client</loc>
+    <loc>https://tools.neocockpit.cn/tool/mqtt-client</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
