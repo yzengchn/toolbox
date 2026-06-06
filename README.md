@@ -6,6 +6,9 @@
 [![Vue 3](https://img.shields.io/badge/Vue-3.x-green.svg)](https://vuejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue.svg)](https://www.typescriptlang.org/)
 
+## 在线使用
+直接访问在线版本，无需安装：[https://tools.neocockpit.cn](https://tools.neocockpit.cn)
+
 ## ✨ 功能特性
 
 ### 🔐 编码工具
@@ -47,9 +50,6 @@
 - **MQTT 客户端** - MQTT 连接与消息收发测试
 
 ## 🚀 快速开始
-
-### 在线使用
-直接访问在线版本，无需安装：[https://toolbox.example.com](https://toolbox.example.com)
 
 ### 本地运行
 
@@ -142,12 +142,6 @@ cp .env.example .env.production
 ## 📄 许可证
 
 本项目基于 [MIT License](LICENSE) 开源。
-
-## 👤 作者
-
-**zy**
-
-- GitHub: [@yzengchn](https://github.com/yzengchn)
 
 ---
 
