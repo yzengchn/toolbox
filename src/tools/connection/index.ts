@@ -1,8 +1,10 @@
 import type { Tool } from '@/types'
 import { defineAsyncComponent } from 'vue'
 
-const WebSocketClient = defineAsyncComponent(() => import('./WebSocketClient.vue'))
-const MqttClient = defineAsyncComponent(() => import('./MqttClient.vue'))
+const loadConnectionTools = () => import('./components')
+
+const WebSocketClient = defineAsyncComponent(() => loadConnectionTools().then(module => module.WebSocketClient))
+const MqttClient = defineAsyncComponent(() => loadConnectionTools().then(module => module.MqttClient))
 
 export const connectionTools: Tool[] = [
   {

@@ -360,7 +360,7 @@
               <n-grid-item>
                 <div class="mini-tool">
                   <h3>808 时间</h3>
-                  <n-input v-model:value="timeInput" placeholder="250605143000 或 BCD Hex" />
+                  <n-input v-model:value="timeInput" :placeholder="jtTimePlaceholder" />
                   <div class="actions-row">
                     <n-button @click="handleNowTime">当前时间</n-button>
                     <n-button @click="handleJtTimeToDate">BCD 转时间</n-button>
@@ -420,13 +420,32 @@ import {
 import ToolHeader from '@/components/ToolHeader.vue'
 import PageTabs from '@/components/PageTabs.vue'
 import { useClipboard } from '@/composables/useClipboard'
+import { todayAt } from '@/utils/demoTime'
 
 const { copy } = useClipboard()
 
-const demoFrame = '7E 02 00 00 26 12 34 56 78 90 12 00 7D 02 00 00 00 01 00 00 00 02 00 BA 7F 0E 07 E4 F1 1C 00 28 00 3C 00 00 18 10 15 10 10 10 01 04 00 00 00 64 02 02 00 7D 01 13 7E'
+const buildDemoFrame = () => buildJt808Frame({
+  msgIdHex: '0200',
+  phone: '123456789012',
+  msgSerialNo: 1,
+  bodyHex: [
+    '00 00 00 01',
+    '00 00 00 02',
+    '00 BA 7F 0E',
+    '07 E4 F1 1C',
+    '00 28',
+    '00 3C',
+    '00 00',
+    dateTimeToJtTime(todayAt(9, 30)),
+    '01 04 00 00 00 64',
+    '02 02 00 7D'
+  ].join(' '),
+  version: '2013',
+  protocolVersion: 1
+})
 const demoJt809Frame = '5B 00 00 00 00 00 00 00 01 10 01 00 00 00 01 00 00 00 00 00 41 BC 5D'
 
-const parseInput = ref(demoFrame)
+const parseInput = ref(buildDemoFrame())
 const parseResults = ref<Jt808ParseResult[]>([])
 const parseError = ref('')
 
@@ -471,6 +490,7 @@ const coordinateOutput = ref('')
 const timeInput = ref('')
 const timeOutput = ref('')
 const fieldError = ref('')
+const jtTimePlaceholder = computed(() => `${dateTimeToJtTime(todayAt(14, 30))} 或 BCD Hex`)
 
 
 const versionOptions = [
@@ -538,7 +558,7 @@ const handleParse = () => {
 }
 
 const loadParseDemo = () => {
-  parseInput.value = demoFrame
+  parseInput.value = buildDemoFrame()
   handleParse()
 }
 

@@ -13,7 +13,7 @@
               <n-input
                 v-model:value="input"
                 type="textarea"
-                placeholder="输入时间戳或日期时间，例如 1717571696 / 1717571696000 / 2026-06-05 14:30:00"
+                :placeholder="inputPlaceholder"
                 :rows="5"
                 clearable
               />
@@ -39,7 +39,7 @@
             <n-space vertical :size="8">
               <div>数字输入会自动识别为秒级或毫秒级时间戳</div>
               <div>支持格式：`YYYY-MM-DD HH:mm:ss`、`YYYY/MM/DD HH:mm:ss`、ISO 8601</div>
-              <div>日期输入如 `2026-06-05` 会按当天 `00:00:00` 解析</div>
+              <div>日期输入如 `{{ todayDateText }}` 会按当天 `00:00:00` 解析</div>
             </n-space>
           </n-card>
         </n-grid-item>
@@ -103,7 +103,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import {
   NAlert,
   NButton,
@@ -117,6 +117,7 @@ import {
   NSpace
 } from 'naive-ui'
 import { useClipboard } from '@/composables/useClipboard'
+import { formatDate, formatDateTime, todayAt, unixSeconds } from '@/utils/demoTime'
 import { parseTimestampInput, type TimestampResult } from './utils'
 import ToolHeader from '@/components/ToolHeader.vue'
 
@@ -125,6 +126,11 @@ const { copy } = useClipboard()
 const input = ref('')
 const error = ref('')
 const result = ref<TimestampResult | null>(null)
+const todayDateText = computed(() => formatDate())
+const inputPlaceholder = computed(() => {
+  const sampleTime = todayAt(14, 30)
+  return `输入时间戳或日期时间，例如 ${unixSeconds(sampleTime)} / ${sampleTime.getTime()} / ${formatDateTime(sampleTime)}`
+})
 
 const handleConvert = () => {
   error.value = ''

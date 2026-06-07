@@ -21,7 +21,7 @@
                 v-model:value="canInput"
                 type="textarea"
                 :rows="11"
-                placeholder="支持 candump、ASC、ID#DATA，例如：&#10;(1717747200.123456) can0 18FECA00#C0FFFFFFE8031A05"
+                :placeholder="inputPlaceholder"
                 clearable
               />
 
@@ -183,15 +183,22 @@ import {
 } from 'naive-ui'
 import ToolHeader from '@/components/ToolHeader.vue'
 import { useClipboard } from '@/composables/useClipboard'
+import { todayAt } from '@/utils/demoTime'
 import { parseCanInput, type CanFrame, type DbcMessage } from './canJ1939'
 
 const { copy } = useClipboard()
 
-const demoCan = [
-  '(1717747200.123456) can0 18FECA00#C0FFFFFFE8031A05',
+const demoTimestamp = () => `${Math.floor(todayAt(9).getTime() / 1000)}.123456`
+
+const buildDemoCan = () => [
+  `(${demoTimestamp()}) can0 18FECA00#C0FFFFFFE8031A05`,
   'can0 18FEF100 [8] FF FF 68 13 FF FF FF FF',
   '18F00400#FF7D7D6823FFFF00'
 ].join('\n')
+
+const inputPlaceholder = computed(() => (
+  `支持 candump、ASC、ID#DATA，例如：\n(${demoTimestamp()}) can0 18FECA00#C0FFFFFFE8031A05`
+))
 
 const demoDbc = [
   'BO_ 419361024 EEC1: 8 Vector__XXX',
@@ -201,7 +208,7 @@ const demoDbc = [
   ' SG_ WheelBasedVehicleSpeed : 16|16@1+ (0.00390625,0) [0|250.996] "km/h" Vector__XXX'
 ].join('\n')
 
-const canInput = ref(demoCan)
+const canInput = ref(buildDemoCan())
 const dbcInput = ref(demoDbc)
 const frames = ref<CanFrame[]>([])
 const dbcMessages = ref<DbcMessage[]>([])
@@ -245,7 +252,7 @@ const handleDecode = () => {
 }
 
 const loadDemo = () => {
-  canInput.value = demoCan
+  canInput.value = buildDemoCan()
   dbcInput.value = demoDbc
   handleDecode()
 }

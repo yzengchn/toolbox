@@ -1,11 +1,7 @@
 import type { Tool } from '@/types'
-import { defineAsyncComponent } from 'vue'
 import PasswordGenerator from './PasswordGenerator.vue'
-
-const UuidGenerator = defineAsyncComponent(() => import('./UuidGenerator.vue'))
-const QrCodeGenerator = defineAsyncComponent(() => import('./QrCodeGenerator.vue'))
-const ColorConverter = defineAsyncComponent(() => import('./ColorConverter.vue'))
-const Base64ImageTool = defineAsyncComponent(() => import('./Base64ImageTool.vue'))
+import QrCodeGenerator from './QrCodeGenerator.vue'
+import UuidGenerator from './UuidGenerator.vue'
 
 export const utilitiesTools: Tool[] = [
   {
@@ -37,25 +33,5 @@ export const utilitiesTools: Tool[] = [
     keywords: ['qrcode', 'qr', '二维码', '生成器', 'barcode'],
     component: QrCodeGenerator,
     path: '/tool/qrcode-generator'
-  },
-  {
-    id: 'color-converter',
-    name: '颜色转换器',
-    description: '在不同颜色格式之间转换 (HEX, RGB, HSL)',
-    icon: 'mdi:palette',
-    category: 'utilities',
-    keywords: ['color', 'hex', 'rgb', 'hsl', '颜色', '转换'],
-    component: ColorConverter,
-    path: '/tool/color-converter'
-  },
-  {
-    id: 'base64-image',
-    name: 'Base64 图片',
-    description: '图片与 Base64 字符串互转，支持拖拽上传',
-    icon: 'mdi:image-outline',
-    category: 'utilities',
-    keywords: ['base64', 'image', '图片', '编码', '解码', 'dataurl'],
-    component: Base64ImageTool,
-    path: '/tool/base64-image'
   }
 ]

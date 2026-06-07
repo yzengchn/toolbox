@@ -431,6 +431,7 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import ToolHeader from '@/components/ToolHeader.vue'
 import { useClipboard } from '@/composables/useClipboard'
+import { formatNmeaDate, todayAt } from '@/utils/demoTime'
 import {
   analyzeCircleFence,
   analyzePolygonFence,
@@ -803,30 +804,40 @@ const appendMapPoint = (lat: number, lng: number) => {
 const loadTrackDemo = async () => {
   sourceSystem.value = 'wgs84'
   outputSystem.value = 'gcj02'
-  trackInput.value = [
-    '39.903740,116.397827,1780707600000,speed:18',
-    '39.904120,116.398980,1780707660000,speed:22',
-    '39.904220,116.400380,1780707720000,speed:26',
-    '39.904260,116.401360,1780707990000,speed:0',
-    '39.904280,116.401390,1780708110000,speed:0',
-    '39.904900,116.402900,1780708170000,speed:34',
-    '39.905500,116.404200,1780708230000,speed:42',
-    '39.914900,116.421800,1780708260000,speed:180',
-    '39.906300,116.406100,1780708350000,speed:40',
-    '39.906820,116.407220,1780708410000,speed:38'
-  ].join('\n')
+  const baseTimestamp = todayAt(9).getTime()
+  const rows = [
+    ['39.903740,116.397827', 0, 18],
+    ['39.904120,116.398980', 60_000, 22],
+    ['39.904220,116.400380', 120_000, 26],
+    ['39.904260,116.401360', 390_000, 0],
+    ['39.904280,116.401390', 510_000, 0],
+    ['39.904900,116.402900', 570_000, 34],
+    ['39.905500,116.404200', 630_000, 42],
+    ['39.914900,116.421800', 660_000, 180],
+    ['39.906300,116.406100', 750_000, 40],
+    ['39.906820,116.407220', 810_000, 38]
+  ] as const
+  trackInput.value = rows
+    .map(([coordinate, offset, speed]) => `${coordinate},${baseTimestamp + offset},speed:${speed}`)
+    .join('\n')
   await handleAnalyzeTrack()
   loadFenceDemo()
   handleAnalyzeFence()
 }
 
 const loadNmeaDemo = () => {
+  const date = formatNmeaDate()
   nmeaInput.value = [
-    '$GPRMC,092204.999,A,3954.2994,N,11623.8696,E,12.3,0.0,060626,,,A*68',
-    '$GPGGA,092205.000,3954.3021,N,11623.8742,E,1,10,0.9,50.0,M,-5.0,M,,*48',
-    '$GPRMC,092305.000,A,3954.3530,N,11623.9580,E,28.0,0.0,060626,,,A*69',
-    '$GPRMC,092405.000,A,3954.4140,N,11624.0820,E,35.0,0.0,060626,,,A*70'
+    buildNmeaSentence(`GPRMC,092204.999,A,3954.2994,N,11623.8696,E,12.3,0.0,${date},,,A`),
+    buildNmeaSentence('GPGGA,092205.000,3954.3021,N,11623.8742,E,1,10,0.9,50.0,M,-5.0,M,,'),
+    buildNmeaSentence(`GPRMC,092305.000,A,3954.3530,N,11623.9580,E,28.0,0.0,${date},,,A`),
+    buildNmeaSentence(`GPRMC,092405.000,A,3954.4140,N,11624.0820,E,35.0,0.0,${date},,,A`)
   ].join('\n')
+}
+
+const buildNmeaSentence = (body: string): string => {
+  const checksum = [...body].reduce((sum, char) => sum ^ char.charCodeAt(0), 0)
+  return `$${body}*${checksum.toString(16).toUpperCase().padStart(2, '0')}`
 }
 
 const loadFenceDemo = () => {

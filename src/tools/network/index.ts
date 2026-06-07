@@ -1,12 +1,14 @@
 import type { Tool } from '@/types'
 import { defineAsyncComponent } from 'vue'
-import UrlEncoder from './UrlEncoder.vue'
 
-const IpLookup = defineAsyncComponent(() => import('./IpLookup.vue'))
-const UserAgentParser = defineAsyncComponent(() => import('./UserAgentParser.vue'))
-const HttpStatus = defineAsyncComponent(() => import('./HttpStatus.vue'))
-const SubnetCalculator = defineAsyncComponent(() => import('./SubnetCalculator.vue'))
-const PortScanner = defineAsyncComponent(() => import('./PortScanner.vue'))
+const loadNetworkTools = () => import('./components')
+
+const IpLookup = defineAsyncComponent(() => loadNetworkTools().then(module => module.IpLookup))
+const UserAgentParser = defineAsyncComponent(() => loadNetworkTools().then(module => module.UserAgentParser))
+const HttpStatus = defineAsyncComponent(() => loadNetworkTools().then(module => module.HttpStatus))
+const SubnetCalculator = defineAsyncComponent(() => loadNetworkTools().then(module => module.SubnetCalculator))
+const PortScanner = defineAsyncComponent(() => loadNetworkTools().then(module => module.PortScanner))
+const UrlEncoder = defineAsyncComponent(() => loadNetworkTools().then(module => module.UrlEncoder))
 
 export const networkTools: Tool[] = [
   {

@@ -20,7 +20,7 @@
               v-model:value="logInput"
               type="textarea"
               :rows="24"
-              placeholder="支持 ISO 时间、毫秒/秒时间戳、[time]、(time) 等常见日志。例如：&#10;2026-06-07 09:00:00.120 INFO terminal=013800138000 JT808 上行 msgId=0200 speed=42"
+              :placeholder="inputPlaceholder"
               clearable
             />
 
@@ -155,6 +155,7 @@ import {
 } from 'naive-ui'
 import ToolHeader from '@/components/ToolHeader.vue'
 import { useClipboard } from '@/composables/useClipboard'
+import { formatDateTimeMs, formatLocalIsoWithOffset, todayAt } from '@/utils/demoTime'
 import {
   parseVehicleLogTimeline,
   type VehicleLogSeverity,
@@ -163,18 +164,22 @@ import {
 
 const { copy } = useClipboard()
 
-const demoInput = [
-  '2026-06-07 09:00:00.120 INFO terminal=013800138000 JT808 上行 msgId=0102 终端鉴权 成功',
-  '2026-06-07 09:00:01.006 INFO terminal=013800138000 JT808 上行 msgId=0200 lat=39.904989 lng=116.405285 speed=42',
-  '2026-06-07 09:00:01.388 WARN terminal=013800138000 JT808 下行 msgId=8300 文本下发 cost=82ms',
-  '2026-06-07T09:00:02.215+08:00 INFO VIN=LGBH52E06RY000001 GB32960 实时信息 SOC=68 speed=38',
-  '1780803602850 OCPP cp=CP-001 -> CSMS BootNotification Accepted cost=120ms',
-  '1780803603120 OCPP cp=CP-001 StatusNotification connectorId=1 status=Available',
-  '1780803610000 CAN can0 18FECA00#C0FFFFFFE8031A05 DM1 SPN=102 FMI=3 alarm',
-  '2026-06-07 09:00:12.500 ERROR OBD/UDS device=VCI-01 7E8 03 7F 22 31 NRC timeout'
+const buildDemoInput = () => [
+  `${formatDateTimeMs(todayAt(9, 0, 0, 120))} INFO terminal=013800138000 JT808 上行 msgId=0102 终端鉴权 成功`,
+  `${formatDateTimeMs(todayAt(9, 0, 1, 6))} INFO terminal=013800138000 JT808 上行 msgId=0200 lat=39.904989 lng=116.405285 speed=42`,
+  `${formatDateTimeMs(todayAt(9, 0, 1, 388))} WARN terminal=013800138000 JT808 下行 msgId=8300 文本下发 cost=82ms`,
+  `${formatLocalIsoWithOffset(todayAt(9, 0, 2, 215))} INFO VIN=LGBH52E06RY000001 GB32960 实时信息 SOC=68 speed=38`,
+  `${todayAt(9, 0, 2, 850).getTime()} OCPP cp=CP-001 -> CSMS BootNotification Accepted cost=120ms`,
+  `${todayAt(9, 0, 3, 120).getTime()} OCPP cp=CP-001 StatusNotification connectorId=1 status=Available`,
+  `${todayAt(9, 0, 10).getTime()} CAN can0 18FECA00#C0FFFFFFE8031A05 DM1 SPN=102 FMI=3 alarm`,
+  `${formatDateTimeMs(todayAt(9, 0, 12, 500))} ERROR OBD/UDS device=VCI-01 7E8 03 7F 22 31 NRC timeout`
 ].join('\n')
 
-const logInput = ref(demoInput)
+const inputPlaceholder = computed(() => (
+  `支持 ISO 时间、毫秒/秒时间戳、[time]、(time) 等常见日志。例如：\n${formatDateTimeMs(todayAt(9, 0, 0, 120))} INFO terminal=013800138000 JT808 上行 msgId=0200 speed=42`
+))
+
+const logInput = ref(buildDemoInput())
 const events = ref<VehicleLogTimelineEvent[]>([])
 const parseError = ref('')
 const protocolFilter = ref('全部')
@@ -260,7 +265,7 @@ const handleParse = () => {
 }
 
 const loadDemo = () => {
-  logInput.value = demoInput
+  logInput.value = buildDemoInput()
   protocolFilter.value = '全部'
   severityFilter.value = '全部'
   deviceFilter.value = '全部'

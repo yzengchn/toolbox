@@ -132,22 +132,38 @@ import {
 } from 'naive-ui'
 import ToolHeader from '@/components/ToolHeader.vue'
 import { useClipboard } from '@/composables/useClipboard'
+import { todayAt } from '@/utils/demoTime'
 import { parseGbt27930Input, type Gbt27930Frame } from './gbt27930'
 
 const { copy } = useClipboard()
 
-const demoInput = [
-  '1826F456#010100FFFFFFFFFF',
-  '1827F456#8813FFFFFFFFFFFF',
-  '1801F456#AA43384730303131',
-  '1806F456#8813F4011027E8035A50',
-  '1810F456#8813F40102FFFFFF',
-  '1811F456#7413F30126015A3C1E00',
-  '1812F456#7013F2012D00AAFFFF',
-  '18190056#0100000000000000'
-].join('\n')
+const buildDemoInput = () => {
+  const sampleTime = todayAt(9, 30)
+  const weekday = sampleTime.getDay() || 7
+  const ctsData = [
+    sampleTime.getSeconds(),
+    sampleTime.getMinutes(),
+    sampleTime.getHours(),
+    weekday,
+    sampleTime.getDate(),
+    sampleTime.getMonth() + 1,
+    Number(String(sampleTime.getFullYear()).slice(-2))
+  ].map(byte => byte.toString(16).toUpperCase().padStart(2, '0')).join('')
 
-const input = ref(demoInput)
+  return [
+    '1826F456#010100FFFFFFFFFF',
+    '1827F456#8813FFFFFFFFFFFF',
+    '1801F456#AA43384730303131',
+    '1806F456#8813F4011027E8035A50',
+    `1807F456#${ctsData}`,
+    '1810F456#8813F40102FFFFFF',
+    '1811F456#7413F30126015A3C1E00',
+    '1812F456#7013F2012D00AAFFFF',
+    '18190056#0100000000000000'
+  ].join('\n')
+}
+
+const input = ref(buildDemoInput())
 const frames = ref<Gbt27930Frame[]>([])
 const parseError = ref('')
 
@@ -185,7 +201,7 @@ const handleParse = () => {
 }
 
 const loadDemo = () => {
-  input.value = demoInput
+  input.value = buildDemoInput()
   handleParse()
 }
 

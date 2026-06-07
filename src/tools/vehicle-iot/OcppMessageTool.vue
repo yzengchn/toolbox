@@ -166,6 +166,7 @@ import {
 } from 'naive-ui'
 import ToolHeader from '@/components/ToolHeader.vue'
 import { useClipboard } from '@/composables/useClipboard'
+import { formatCompactDate } from '@/utils/demoTime'
 import {
   buildOcppMessageText,
   getOcppActionTemplates,
@@ -192,7 +193,8 @@ const messageKindOptions = [
 const version = ref<OcppVersion>('1.6')
 const messageKind = ref<OcppMessageKind>('CALL')
 const selectedAction = ref('BootNotification')
-const uniqueId = ref('uid-20260607-0001')
+const defaultUniqueId = () => `uid-${formatCompactDate()}-0001`
+const uniqueId = ref(defaultUniqueId())
 const ocppInput = ref('')
 const frames = ref<OcppFrame[]>([])
 const parseError = ref('')
@@ -217,7 +219,7 @@ const builtMessage = computed(() => buildOcppMessageText({
   version: version.value,
   messageKind: messageKind.value,
   action: selectedAction.value,
-  uniqueId: uniqueId.value || 'uid-20260607-0001'
+  uniqueId: uniqueId.value || defaultUniqueId()
 }))
 
 const summaryCards = computed(() => {

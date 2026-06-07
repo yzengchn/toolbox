@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
+import ToolView from '@/views/ToolView.vue'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -13,7 +14,7 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/tool/:toolId',
-    component: () => import('@/views/ToolView.vue'),
+    component: ToolView,
     name: 'tool',
     props: true
   }

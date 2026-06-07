@@ -1,3 +1,4 @@
+import { formatCompactDate, formatIsoUtc, todayAt } from '@/utils/demoTime'
 import { parseNonEmptyInputLines } from './utils'
 
 export type OcppVersion = '1.6' | '2.0.1'
@@ -49,27 +50,34 @@ export interface BuildOcppMessageOptions {
   uniqueId: string
 }
 
-const actionTemplates: Record<OcppVersion, OcppActionTemplate[]> = {
-  '1.6': [
-    {
-      action: 'BootNotification',
-      label: 'BootNotification 启动通知',
-      direction: 'ChargePoint -> CentralSystem',
-      description: '充电桩启动后上报厂商、型号和固件信息',
-      requestRequired: ['chargePointVendor', 'chargePointModel'],
-      responseRequired: ['status', 'currentTime', 'interval'],
-      request: {
-        chargePointVendor: 'ACME',
-        chargePointModel: 'AC-7K',
-        chargePointSerialNumber: 'CP202606070001',
-        firmwareVersion: '1.0.0'
+const createActionTemplates = (): Record<OcppVersion, OcppActionTemplate[]> => {
+  const dateText = formatCompactDate()
+  const sampleStartTime = formatIsoUtc(todayAt(9))
+  const sampleMeterTime = formatIsoUtc(todayAt(9, 30))
+  const sampleStopTime = formatIsoUtc(todayAt(10, 20))
+  const transactionId = `TX-${dateText}-0001`
+
+  return {
+    '1.6': [
+      {
+        action: 'BootNotification',
+        label: 'BootNotification 启动通知',
+        direction: 'ChargePoint -> CentralSystem',
+        description: '充电桩启动后上报厂商、型号和固件信息',
+        requestRequired: ['chargePointVendor', 'chargePointModel'],
+        responseRequired: ['status', 'currentTime', 'interval'],
+        request: {
+          chargePointVendor: 'ACME',
+          chargePointModel: 'AC-7K',
+          chargePointSerialNumber: `CP${dateText}0001`,
+          firmwareVersion: '1.0.0'
+        },
+        response: {
+          status: 'Accepted',
+          currentTime: sampleStartTime,
+          interval: 300
+        }
       },
-      response: {
-        status: 'Accepted',
-        currentTime: '2026-06-07T09:00:00Z',
-        interval: 300
-      }
-    },
     {
       action: 'Heartbeat',
       label: 'Heartbeat 心跳',
@@ -79,7 +87,7 @@ const actionTemplates: Record<OcppVersion, OcppActionTemplate[]> = {
       responseRequired: ['currentTime'],
       request: {},
       response: {
-        currentTime: '2026-06-07T09:00:00Z'
+        currentTime: sampleStartTime
       }
     },
     {
@@ -93,7 +101,7 @@ const actionTemplates: Record<OcppVersion, OcppActionTemplate[]> = {
         connectorId: 1,
         errorCode: 'NoError',
         status: 'Available',
-        timestamp: '2026-06-07T09:00:00Z'
+        timestamp: sampleStartTime
       },
       response: {}
     },
@@ -124,7 +132,7 @@ const actionTemplates: Record<OcppVersion, OcppActionTemplate[]> = {
         connectorId: 1,
         idTag: 'TEST-IDTAG-001',
         meterStart: 12500,
-        timestamp: '2026-06-07T09:00:00Z'
+        timestamp: sampleStartTime
       },
       response: {
         transactionId: 10001,
@@ -142,7 +150,7 @@ const actionTemplates: Record<OcppVersion, OcppActionTemplate[]> = {
       responseRequired: [],
       request: {
         meterStop: 16880,
-        timestamp: '2026-06-07T10:20:00Z',
+        timestamp: sampleStopTime,
         transactionId: 10001,
         reason: 'Local'
       },
@@ -160,7 +168,7 @@ const actionTemplates: Record<OcppVersion, OcppActionTemplate[]> = {
         transactionId: 10001,
         meterValue: [
           {
-            timestamp: '2026-06-07T09:30:00Z',
+            timestamp: sampleMeterTime,
             sampledValue: [
               {
                 value: '16.88',
@@ -276,12 +284,12 @@ const actionTemplates: Record<OcppVersion, OcppActionTemplate[]> = {
         chargingStation: {
           model: 'DC-120K',
           vendorName: 'ACME',
-          serialNumber: 'CS202606070001',
+          serialNumber: `CS${dateText}0001`,
           firmwareVersion: '2.0.1'
         }
       },
       response: {
-        currentTime: '2026-06-07T09:00:00Z',
+        currentTime: sampleStartTime,
         interval: 300,
         status: 'Accepted'
       }
@@ -295,7 +303,7 @@ const actionTemplates: Record<OcppVersion, OcppActionTemplate[]> = {
       responseRequired: ['currentTime'],
       request: {},
       response: {
-        currentTime: '2026-06-07T09:00:00Z'
+        currentTime: sampleStartTime
       }
     },
     {
@@ -306,7 +314,7 @@ const actionTemplates: Record<OcppVersion, OcppActionTemplate[]> = {
       requestRequired: ['timestamp', 'connectorStatus', 'evseId', 'connectorId'],
       responseRequired: [],
       request: {
-        timestamp: '2026-06-07T09:00:00Z',
+        timestamp: sampleStartTime,
         connectorStatus: 'Available',
         evseId: 1,
         connectorId: 1
@@ -341,11 +349,11 @@ const actionTemplates: Record<OcppVersion, OcppActionTemplate[]> = {
       responseRequired: [],
       request: {
         eventType: 'Started',
-        timestamp: '2026-06-07T09:00:00Z',
+        timestamp: sampleStartTime,
         triggerReason: 'Authorized',
         seqNo: 1,
         transactionInfo: {
-          transactionId: 'TX-20260607-0001'
+          transactionId
         },
         evse: {
           id: 1,
@@ -365,7 +373,7 @@ const actionTemplates: Record<OcppVersion, OcppActionTemplate[]> = {
         evseId: 1,
         meterValue: [
           {
-            timestamp: '2026-06-07T09:30:00Z',
+            timestamp: sampleMeterTime,
             sampledValue: [
               {
                 value: 16.88,
@@ -388,12 +396,12 @@ const actionTemplates: Record<OcppVersion, OcppActionTemplate[]> = {
       requestRequired: ['generatedAt', 'seqNo', 'eventData'],
       responseRequired: [],
       request: {
-        generatedAt: '2026-06-07T09:00:00Z',
+        generatedAt: sampleStartTime,
         seqNo: 1,
         eventData: [
           {
             eventId: 1001,
-            timestamp: '2026-06-07T09:00:00Z',
+            timestamp: sampleStartTime,
             trigger: 'Alerting',
             actualValue: 'OverTemperature',
             eventNotificationType: 'HardWiredNotification',
@@ -439,7 +447,7 @@ const actionTemplates: Record<OcppVersion, OcppActionTemplate[]> = {
       requestRequired: ['transactionId'],
       responseRequired: ['status'],
       request: {
-        transactionId: 'TX-20260607-0001'
+        transactionId
       },
       response: {
         status: 'Accepted'
@@ -531,7 +539,8 @@ const actionTemplates: Record<OcppVersion, OcppActionTemplate[]> = {
         status: 'Accepted'
       }
     }
-  ]
+    ]
+  }
 }
 
 const messageTypeNames: Record<number, string> = {
@@ -541,7 +550,7 @@ const messageTypeNames: Record<number, string> = {
 }
 
 export function getOcppActionTemplates(version: OcppVersion): OcppActionTemplate[] {
-  return actionTemplates[version]
+  return createActionTemplates()[version]
 }
 
 export function buildOcppMessageText(options: BuildOcppMessageOptions): string {
@@ -723,7 +732,7 @@ function buildInvalidFrame(order: number, rawText: string, message: string): Ocp
 }
 
 function findTemplate(version: OcppVersion, action: string): OcppActionTemplate | undefined {
-  return actionTemplates[version].find(item => item.action === action)
+  return createActionTemplates()[version].find(item => item.action === action)
 }
 
 function splitTopLevelJsonValues(input: string): string[] {

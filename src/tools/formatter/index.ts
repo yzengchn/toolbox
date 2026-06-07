@@ -1,9 +1,11 @@
 import type { Tool } from '@/types'
 import { defineAsyncComponent } from 'vue'
 
-const JsonFormatter = defineAsyncComponent(() => import('./JsonFormatter.vue'))
-const SqlFormatter = defineAsyncComponent(() => import('./SqlFormatter.vue'))
-const XmlFormatter = defineAsyncComponent(() => import('./XmlFormatter.vue'))
+const loadFormatterTools = () => import('./components')
+
+const JsonFormatter = defineAsyncComponent(() => loadFormatterTools().then(module => module.JsonFormatter))
+const SqlFormatter = defineAsyncComponent(() => loadFormatterTools().then(module => module.SqlFormatter))
+const XmlFormatter = defineAsyncComponent(() => loadFormatterTools().then(module => module.XmlFormatter))
 
 export const formatterTools: Tool[] = [
   {

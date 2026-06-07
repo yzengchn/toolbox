@@ -1,5 +1,5 @@
 <template>
-  <n-config-provider :theme="naiveTheme" :theme-overrides="naiveThemeOverrides">
+  <n-config-provider :theme="naiveTheme" :theme-overrides="naiveThemeOverrides" :hljs="hljs">
     <n-message-provider>
       <div class="app-layout">
         <AppHeader />
@@ -22,11 +22,17 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount } from 'vue'
 import { NConfigProvider, NMessageProvider } from 'naive-ui'
+import hljs from 'highlight.js/lib/core'
+import javascript from 'highlight.js/lib/languages/javascript'
+import plaintext from 'highlight.js/lib/languages/plaintext'
 import { useTheme } from '@/composables/useTheme'
 import { useAppStore } from '@/stores/app'
 import AppHeader from './AppHeader.vue'
 import AppSidebar from './AppSidebar.vue'
 import AppContent from './AppContent.vue'
+
+hljs.registerLanguage('javascript', javascript)
+hljs.registerLanguage('plaintext', plaintext)
 
 const { naiveTheme, naiveThemeOverrides } = useTheme()
 const appStore = useAppStore()

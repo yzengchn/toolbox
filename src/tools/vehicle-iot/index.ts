@@ -1,16 +1,18 @@
 import type { Tool } from '@/types'
 import { defineAsyncComponent } from 'vue'
 
-const Jt808Jt809Parser = defineAsyncComponent(() => import('./Jt808Jt809Parser.vue'))
-const GeoHashTool = defineAsyncComponent(() => import('./GeoHashTool.vue'))
-const CoordinateConverter = defineAsyncComponent(() => import('./CoordinateConverter.vue'))
-const TrackMapViewer = defineAsyncComponent(() => import('./TrackMapViewer.vue'))
-const Gb32960Parser = defineAsyncComponent(() => import('./Gb32960Parser.vue'))
-const CanJ1939Decoder = defineAsyncComponent(() => import('./CanJ1939Decoder.vue'))
-const ObdUdsDiagnostic = defineAsyncComponent(() => import('./ObdUdsDiagnostic.vue'))
-const Gbt27930Parser = defineAsyncComponent(() => import('./Gbt27930Parser.vue'))
-const OcppMessageTool = defineAsyncComponent(() => import('./OcppMessageTool.vue'))
-const VehicleLogTimelineTool = defineAsyncComponent(() => import('./VehicleLogTimelineTool.vue'))
+const loadVehicleIotTools = () => import('./components')
+
+const Jt808Jt809Parser = defineAsyncComponent(() => loadVehicleIotTools().then(module => module.Jt808Jt809Parser))
+const GeoHashTool = defineAsyncComponent(() => loadVehicleIotTools().then(module => module.GeoHashTool))
+const CoordinateConverter = defineAsyncComponent(() => loadVehicleIotTools().then(module => module.CoordinateConverter))
+const TrackMapViewer = defineAsyncComponent(() => loadVehicleIotTools().then(module => module.TrackMapViewer))
+const Gb32960Parser = defineAsyncComponent(() => loadVehicleIotTools().then(module => module.Gb32960Parser))
+const CanJ1939Decoder = defineAsyncComponent(() => loadVehicleIotTools().then(module => module.CanJ1939Decoder))
+const ObdUdsDiagnostic = defineAsyncComponent(() => loadVehicleIotTools().then(module => module.ObdUdsDiagnostic))
+const Gbt27930Parser = defineAsyncComponent(() => loadVehicleIotTools().then(module => module.Gbt27930Parser))
+const OcppMessageTool = defineAsyncComponent(() => loadVehicleIotTools().then(module => module.OcppMessageTool))
+const VehicleLogTimelineTool = defineAsyncComponent(() => loadVehicleIotTools().then(module => module.VehicleLogTimelineTool))
 
 export const vehicleIotTools: Tool[] = [
   {

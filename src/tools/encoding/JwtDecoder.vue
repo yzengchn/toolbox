@@ -139,6 +139,7 @@ import {
   NSpace
 } from 'naive-ui'
 import { useClipboard } from '@/composables/useClipboard'
+import { todayAt, unixSeconds } from '@/utils/demoTime'
 import { decodeJWT, encodeBase64, type JwtDecodeResult } from './utils'
 import ToolHeader from '@/components/ToolHeader.vue'
 
@@ -153,13 +154,17 @@ const payloadText = computed(() => JSON.stringify(result.value?.payload ?? {}, n
 
 const buildExampleToken = () => {
   const header = encodeBase64(JSON.stringify({ alg: 'HS256', typ: 'JWT' }), true)
+  const issuedAt = unixSeconds(todayAt(9))
+  const notBefore = unixSeconds(todayAt(9, 5))
+  const expiresAt = unixSeconds(todayAt(23, 59, 59))
   const payload = encodeBase64(
     JSON.stringify({
       sub: '1234567890',
       name: 'ToolBox Demo',
       role: 'admin',
-      iat: 1717571696,
-      exp: 4102444800
+      iat: issuedAt,
+      nbf: notBefore,
+      exp: expiresAt
     }),
     true
   )

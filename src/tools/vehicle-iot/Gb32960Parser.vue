@@ -168,13 +168,27 @@ import {
 } from 'naive-ui'
 import ToolHeader from '@/components/ToolHeader.vue'
 import { useClipboard } from '@/composables/useClipboard'
-import { parseGb32960Frames, type Gb32960ParseResult } from './utils'
+import { todayAt } from '@/utils/demoTime'
+import { bytesToHex, hexToBytes, parseGb32960Frames, xorChecksum, type Gb32960ParseResult } from './utils'
 
 const { copy } = useClipboard()
 
-const demoFrame = '23 23 02 FE 4C 47 42 48 35 32 45 30 34 52 59 31 32 33 34 35 36 01 00 25 26 06 07 09 30 00 01 01 03 01 02 BC 00 01 E2 40 0F 3C 28 D2 55 01 03 27 10 2D 00 05 00 06 F0 34 25 02 60 E6 DD AD'
+const buildDemoFrame = () => {
+  const bytes = hexToBytes('23 23 02 FE 4C 47 42 48 35 32 45 30 34 52 59 31 32 33 34 35 36 01 00 25 00 00 00 00 00 00 01 01 03 01 02 BC 00 01 E2 40 0F 3C 28 D2 55 01 03 27 10 2D 00 05 00 06 F0 34 25 02 60 E6 DD AD')
+  const sampleTime = todayAt(9, 30)
+  bytes.splice(24, 6,
+    Number(String(sampleTime.getFullYear()).slice(-2)),
+    sampleTime.getMonth() + 1,
+    sampleTime.getDate(),
+    sampleTime.getHours(),
+    sampleTime.getMinutes(),
+    sampleTime.getSeconds()
+  )
+  bytes[bytes.length - 1] = xorChecksum(bytes.slice(2, -1))
+  return bytesToHex(bytes)
+}
 
-const parseInput = ref(demoFrame)
+const parseInput = ref(buildDemoFrame())
 const parseResults = ref<Gb32960ParseResult[]>([])
 const parseError = ref('')
 
@@ -219,7 +233,7 @@ const handleParse = () => {
 }
 
 const loadDemo = () => {
-  parseInput.value = demoFrame
+  parseInput.value = buildDemoFrame()
   handleParse()
 }
 
