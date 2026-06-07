@@ -488,6 +488,8 @@ const getSubtleCrypto = () => {
   return subtle
 }
 
+const toArrayBuffer = (bytes: Uint8Array): ArrayBuffer => bytes.slice().buffer
+
 const pemToBytes = (pem: string, label: 'PUBLIC KEY' | 'PRIVATE KEY') => {
   const trimmed = pem.trim()
   const keyName = label === 'PUBLIC KEY' ? '公钥' : '私钥'
@@ -521,7 +523,7 @@ const formatPem = (label: 'PUBLIC KEY' | 'PRIVATE KEY', buffer: ArrayBuffer) => 
 const importRsaPublicKey = async () => {
   return getSubtleCrypto().importKey(
     'spki',
-    pemToBytes(rsaPublicKey.value, 'PUBLIC KEY'),
+    toArrayBuffer(pemToBytes(rsaPublicKey.value, 'PUBLIC KEY')),
     { name: 'RSA-OAEP', hash: 'SHA-256' },
     false,
     ['encrypt']
@@ -531,7 +533,7 @@ const importRsaPublicKey = async () => {
 const importRsaPrivateKey = async () => {
   return getSubtleCrypto().importKey(
     'pkcs8',
-    pemToBytes(rsaPrivateKey.value, 'PRIVATE KEY'),
+    toArrayBuffer(pemToBytes(rsaPrivateKey.value, 'PRIVATE KEY')),
     { name: 'RSA-OAEP', hash: 'SHA-256' },
     false,
     ['decrypt']
@@ -591,7 +593,7 @@ const handleRsaRun = async () => {
     const decrypted = await getSubtleCrypto().decrypt(
       { name: 'RSA-OAEP' },
       privateKey,
-      base64ToBytes(rsaInput.value, '请输入密文', '密文不是有效的 Base64 内容')
+      toArrayBuffer(base64ToBytes(rsaInput.value, '请输入密文', '密文不是有效的 Base64 内容'))
     )
     rsaOutput.value = textDecoder.decode(decrypted)
     rsaNotice.value = 'RSA 解密完成'
