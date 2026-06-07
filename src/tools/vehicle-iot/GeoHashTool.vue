@@ -9,10 +9,10 @@
       <div class="workspace-grid">
         <n-card class="panel-card" title="经纬度输入">
           <n-space vertical :size="14">
-            <n-form-item label="经纬度 (纬度,经度)">
+            <n-form-item label="经纬度">
               <n-input
                 v-model:value="coordinateInput"
-                placeholder="例如: 39.904989,116.405285"
+                placeholder="例如: 39.904989,116.405285，也支持 lng lat、lat:39.9,lng:116.4"
                 clearable
                 @update:value="handleCoordinateInputChange"
               >
@@ -24,6 +24,10 @@
 
             <n-alert v-if="coordinateError" type="warning" size="small" closable @close="coordinateError = ''">
               {{ coordinateError }}
+            </n-alert>
+
+            <n-alert type="info" :bordered="false" size="small">
+              坐标解析规则与轨迹/坐标转换工具一致，点击地图可回填当前点并重新计算 GeoHash。
             </n-alert>
 
             <div class="actions-row">
@@ -67,14 +71,17 @@
           <n-card title="GeoHash 结果">
             <n-space vertical :size="12">
               <div class="geohash-result">
-                <n-text strong>GeoHash: </n-text>
-                <n-text code style="font-size: 16px">{{ geohashResult || '-' }}</n-text>
+                <div class="result-label">
+                  <n-text strong>GeoHash</n-text>
+                  <n-text depth="3">精度 {{ geohashPrecision }}</n-text>
+                </div>
+                <n-text code class="geohash-code">{{ geohashResult || '-' }}</n-text>
                 <n-button v-if="geohashResult" text @click="copyGeohash">复制</n-button>
               </div>
 
               <n-divider style="margin: 8px 0" />
 
-              <div>
+              <div class="decode-block">
                 <n-text strong>GeoHash 解码:</n-text>
                 <n-input
                   v-model:value="geohashDecode"
@@ -82,17 +89,21 @@
                   clearable
                   @update:value="handleGeohashDecode"
                 />
-                <div v-if="geohashDecodeResult" style="margin-top: 8px">
-                  <n-text depth="3" style="font-size: 13px">
-                    纬度: {{ geohashDecodeResult.latitude }},
-                    经度: {{ geohashDecodeResult.longitude }}
-                  </n-text>
+                <div v-if="geohashDecodeResult" class="decoded-coordinate">
+                  <div>
+                    <n-text depth="3">解码坐标</n-text>
+                    <strong>{{ decodedCoordinateText }}</strong>
+                  </div>
+                  <n-button size="small" @click="copyDecodedCoordinate">复制坐标</n-button>
                 </div>
               </div>
             </n-space>
           </n-card>
 
-          <n-card title="地图展示">
+          <n-card class="map-card" title="地图展示">
+            <template #header-extra>
+              <n-text depth="3" class="map-coordinate">{{ mapCoordinateText }}</n-text>
+            </template>
             <div ref="mapContainer" class="map-container"></div>
             <n-alert v-if="mapError" type="error" style="margin-top: 12px">
               {{ mapError }}
@@ -105,7 +116,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import {
   NAlert,
   NButton,
@@ -122,6 +133,7 @@ import 'leaflet/dist/leaflet.css'
 import * as geohash from 'ngeohash'
 import ToolHeader from '@/components/ToolHeader.vue'
 import { useClipboard } from '@/composables/useClipboard'
+import { formatCoordinate, parseCoordinateLine, roundCoordinate } from './utils'
 
 const { copy } = useClipboard()
 
@@ -137,7 +149,19 @@ const geohashDecode = ref('')
 const geohashDecodeResult = ref<{ latitude: number; longitude: number } | null>(null)
 const mapError = ref('')
 let mapInstance: L.Map | null = null
-let mapMarker: L.Marker | null = null
+let mapMarker: L.CircleMarker | null = null
+
+const mapCoordinateText = computed(() => {
+  if (!geohashResult.value) return '-'
+  return formatCoordinate({ lat: mapLat.value, lng: mapLng.value })
+})
+const decodedCoordinateText = computed(() => {
+  if (!geohashDecodeResult.value) return ''
+  return formatCoordinate({
+    lat: geohashDecodeResult.value.latitude,
+    lng: geohashDecodeResult.value.longitude
+  })
+})
 
 // 地图和 GeoHash 处理函数
 const parseCoordinateInput = (): boolean => {
@@ -148,34 +172,15 @@ const parseCoordinateInput = (): boolean => {
     return false
   }
 
-  const parts = coordinateInput.value.split(',').map(p => p.trim())
-
-  if (parts.length !== 2) {
-    coordinateError.value = '格式错误，请使用逗号分隔纬度和经度'
+  try {
+    const point = parseCoordinateLine(coordinateInput.value, 1)
+    mapLat.value = point.lat
+    mapLng.value = point.lng
+    return true
+  } catch (err) {
+    coordinateError.value = (err as Error).message
     return false
   }
-
-  const lat = parseFloat(parts[0])
-  const lng = parseFloat(parts[1])
-
-  if (isNaN(lat) || isNaN(lng)) {
-    coordinateError.value = '经纬度必须是有效的数字'
-    return false
-  }
-
-  if (lat < -90 || lat > 90) {
-    coordinateError.value = '纬度范围必须在 -90 到 90 之间'
-    return false
-  }
-
-  if (lng < -180 || lng > 180) {
-    coordinateError.value = '经度范围必须在 -180 到 180 之间'
-    return false
-  }
-
-  mapLat.value = lat
-  mapLng.value = lng
-  return true
 }
 
 const handleCoordinateInputChange = () => {
@@ -199,12 +204,16 @@ const initMap = () => {
 
     // 添加标记
     updateMapMarker()
+    requestAnimationFrame(() => mapInstance?.invalidateSize())
+    setTimeout(() => mapInstance?.invalidateSize(), 250)
 
     // 监听地图点击事件
     mapInstance.on('click', (e: L.LeafletMouseEvent) => {
-      mapLat.value = Number(e.latlng.lat.toFixed(6))
-      mapLng.value = Number(e.latlng.lng.toFixed(6))
-      coordinateInput.value = `${mapLat.value},${mapLng.value}`
+      const coordinate = roundCoordinate({ lat: e.latlng.lat, lng: e.latlng.lng })
+      mapLat.value = coordinate.lat
+      mapLng.value = coordinate.lng
+      coordinateInput.value = formatCoordinate(coordinate)
+      coordinateError.value = ''
       handleCoordinateUpdate()
     })
   } catch (err) {
@@ -221,11 +230,17 @@ const updateMapMarker = () => {
   }
 
   // 添加新标记
-  mapMarker = L.marker([mapLat.value, mapLng.value]).addTo(mapInstance)
-  mapMarker.bindPopup(`纬度: ${mapLat.value}<br>经度: ${mapLng.value}<br>GeoHash: ${geohashResult.value}`)
+  mapMarker = L.circleMarker([mapLat.value, mapLng.value], {
+    radius: 7,
+    color: '#1d9bf0',
+    fillColor: '#1d9bf0',
+    fillOpacity: 0.88,
+    weight: 2
+  }).addTo(mapInstance)
+  mapMarker.bindPopup(`坐标: ${mapCoordinateText.value}<br>GeoHash: ${geohashResult.value || '-'}`)
 
   // 移动地图中心
-  mapInstance.setView([mapLat.value, mapLng.value])
+  mapInstance.setView([mapLat.value, mapLng.value], mapInstance.getZoom())
 }
 
 const handleCoordinateUpdate = () => {
@@ -246,6 +261,7 @@ const handleCoordinateUpdate = () => {
 }
 
 const handleGeohashDecode = () => {
+  mapError.value = ''
   if (!geohashDecode.value.trim()) {
     geohashDecodeResult.value = null
     return
@@ -261,8 +277,11 @@ const handleGeohashDecode = () => {
     // 更新地图位置
     mapLat.value = geohashDecodeResult.value.latitude
     mapLng.value = geohashDecodeResult.value.longitude
+    coordinateInput.value = decodedCoordinateText.value
+    coordinateError.value = ''
     handleCoordinateUpdate()
   } catch (err) {
+    geohashDecodeResult.value = null
     mapError.value = 'GeoHash 解码失败: ' + (err as Error).message
   }
 }
@@ -278,7 +297,8 @@ const handleGetCurrentLocation = () => {
     (position) => {
       mapLat.value = Number(position.coords.latitude.toFixed(6))
       mapLng.value = Number(position.coords.longitude.toFixed(6))
-      coordinateInput.value = `${mapLat.value},${mapLng.value}`
+      coordinateInput.value = formatCoordinate({ lat: mapLat.value, lng: mapLng.value })
+      coordinateError.value = ''
       handleCoordinateUpdate()
     },
     (error) => {
@@ -290,23 +310,33 @@ const handleGetCurrentLocation = () => {
 const handleUseBeijing = () => {
   mapLat.value = 39.904989
   mapLng.value = 116.405285
-  coordinateInput.value = `${mapLat.value},${mapLng.value}`
+  coordinateInput.value = formatCoordinate({ lat: mapLat.value, lng: mapLng.value })
+  coordinateError.value = ''
   handleCoordinateUpdate()
 }
 
 const handleClearMap = () => {
   mapLat.value = 0
   mapLng.value = 0
-  coordinateInput.value = '0,0'
+  coordinateInput.value = ''
   geohashResult.value = ''
   geohashDecode.value = ''
   geohashDecodeResult.value = null
   coordinateError.value = ''
   mapError.value = ''
+  if (mapMarker) {
+    mapMarker.remove()
+    mapMarker = null
+  }
+  mapInstance?.setView([0, 0], 2)
 }
 
 const copyGeohash = () => {
   copy(geohashResult.value)
+}
+
+const copyDecodedCoordinate = () => {
+  copy(decodedCoordinateText.value)
 }
 
 onMounted(() => {
@@ -343,7 +373,8 @@ onUnmounted(() => {
   align-items: start;
 }
 
-.panel-card {
+.panel-card,
+.map-card {
   border-radius: var(--radius-md);
 }
 
@@ -361,19 +392,66 @@ onUnmounted(() => {
   min-width: 0;
 }
 
+.map-card :deep(.n-card__content) {
+  min-width: 0;
+}
+
 .map-container {
   width: 100%;
-  height: 400px;
+  height: clamp(420px, calc(100vh - var(--header-height) - 300px), 620px);
+  min-height: 420px;
   border-radius: var(--radius-sm);
   overflow: hidden;
   border: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
 }
 
 .geohash-result {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(92px, auto) minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--spacing-sm);
-  flex-wrap: wrap;
+}
+
+.result-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.geohash-code {
+  min-width: 0;
+  font-size: 18px;
+  word-break: break-all;
+}
+
+.decode-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.decoded-coordinate {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
+}
+
+.decoded-coordinate strong {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  word-break: break-all;
+}
+
+.map-coordinate {
+  font-family: var(--font-mono);
+  word-break: break-all;
 }
 
 @media (max-width: 1100px) {
@@ -385,6 +463,18 @@ onUnmounted(() => {
 @media (max-width: 720px) {
   .tool-container {
     padding: var(--spacing-md);
+  }
+
+  .geohash-result,
+  .decoded-coordinate {
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .map-container {
+    height: 380px;
+    min-height: 360px;
   }
 }
 </style>

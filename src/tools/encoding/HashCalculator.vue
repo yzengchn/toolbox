@@ -50,10 +50,13 @@
                 <n-text strong style="display: block; margin-bottom: 8px">哈希算法</n-text>
                 <n-radio-group v-model:value="algorithm">
                   <n-space :size="16">
-                    <n-radio value="MD5">MD5</n-radio>
-                    <n-radio value="SHA1">SHA1</n-radio>
-                    <n-radio value="SHA256">SHA256</n-radio>
-                    <n-radio value="SHA512">SHA512</n-radio>
+                    <n-radio
+                      v-for="item in hashAlgorithmOptions"
+                      :key="item.value"
+                      :value="item.value"
+                    >
+                      {{ item.label }}
+                    </n-radio>
                   </n-space>
                 </n-radio-group>
               </div>
@@ -146,11 +149,19 @@ import {
   NText
 } from 'naive-ui'
 import { useClipboard } from '@/composables/useClipboard'
-import { computeFileHash, computeHash, type HashAlgorithm } from './utils'
+import {
+  computeFileHash,
+  computeHash,
+  formatHexDigest,
+  getErrorMessage,
+  HASH_ALGORITHM_OPTIONS,
+  type HashAlgorithm
+} from './utils'
 import ToolHeader from '@/components/ToolHeader.vue'
 import { formatFileSize } from '@/utils/format'
 
 const { copy } = useClipboard()
+const hashAlgorithmOptions = HASH_ALGORITHM_OPTIONS
 
 const mode = ref<'text' | 'file'>('text')
 const algorithm = ref<HashAlgorithm>('SHA256')
@@ -161,13 +172,14 @@ const rawOutput = ref('')
 const error = ref('')
 const isCalculating = ref(false)
 const fileInputRef = ref<HTMLInputElement | null>(null)
+let calculationId = 0
 
 const displayOutput = computed(() => {
   if (!rawOutput.value) {
     return ''
   }
 
-  return uppercase.value ? rawOutput.value.toUpperCase() : rawOutput.value.toLowerCase()
+  return formatHexDigest(rawOutput.value, uppercase.value)
 })
 
 const sourceLabel = computed(() => {
@@ -197,11 +209,13 @@ const handleFileChange = (event: Event) => {
 }
 
 const calculateHash = async () => {
+  const currentCalculationId = ++calculationId
   error.value = ''
-  isCalculating.value = true
 
   try {
     if (mode.value === 'text') {
+      isCalculating.value = false
+
       if (!textInput.value) {
         rawOutput.value = ''
         return
@@ -213,23 +227,41 @@ const calculateHash = async () => {
 
     if (!selectedFile.value) {
       rawOutput.value = ''
+      isCalculating.value = false
       return
     }
 
-    rawOutput.value = await computeFileHash(selectedFile.value, algorithm.value)
+    const file = selectedFile.value
+    const selectedAlgorithm = algorithm.value
+    isCalculating.value = true
+    const nextOutput = await computeFileHash(file, selectedAlgorithm)
+
+    if (currentCalculationId !== calculationId) {
+      return
+    }
+
+    rawOutput.value = nextOutput
   } catch (hashError) {
+    if (currentCalculationId !== calculationId) {
+      return
+    }
+
     rawOutput.value = ''
-    error.value = (hashError as Error).message || '哈希计算失败'
+    error.value = getErrorMessage(hashError, '哈希计算失败')
   } finally {
-    isCalculating.value = false
+    if (currentCalculationId === calculationId) {
+      isCalculating.value = false
+    }
   }
 }
 
 const handleClear = () => {
+  calculationId += 1
   textInput.value = ''
   clearSelectedFile()
   rawOutput.value = ''
   error.value = ''
+  isCalculating.value = false
 }
 
 // 实时监听输入变化

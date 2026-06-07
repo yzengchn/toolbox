@@ -1,8 +1,12 @@
 import type { Tool } from '@/types'
-import IpLookup from './IpLookup.vue'
+import { defineAsyncComponent } from 'vue'
 import UrlEncoder from './UrlEncoder.vue'
-import HttpStatus from './HttpStatus.vue'
-import SubnetCalculator from './SubnetCalculator.vue'
+
+const IpLookup = defineAsyncComponent(() => import('./IpLookup.vue'))
+const UserAgentParser = defineAsyncComponent(() => import('./UserAgentParser.vue'))
+const HttpStatus = defineAsyncComponent(() => import('./HttpStatus.vue'))
+const SubnetCalculator = defineAsyncComponent(() => import('./SubnetCalculator.vue'))
+const PortScanner = defineAsyncComponent(() => import('./PortScanner.vue'))
 
 export const networkTools: Tool[] = [
   {
@@ -16,6 +20,26 @@ export const networkTools: Tool[] = [
     path: '/tool/ip-lookup'
   },
   {
+    id: 'subnet-calculator',
+    name: 'CIDR 网段计算器',
+    description: '计算 IPv4 CIDR 网段的网络地址、广播地址、可用主机数等信息',
+    icon: 'mdi:calculator',
+    category: 'network',
+    keywords: ['subnet', 'cidr', '子网', '计算器', 'ip', '网络'],
+    component: SubnetCalculator,
+    path: '/tool/subnet-calculator'
+  },
+  {
+    id: 'port-scanner',
+    name: '端口扫描工具',
+    description: '批量探测目标主机的 HTTP/HTTPS 端口可访问性',
+    icon: 'mdi:radar',
+    category: 'network',
+    keywords: ['port', 'scan', 'scanner', '端口', '扫描', '探测', 'http', 'https'],
+    component: PortScanner,
+    path: '/tool/port-scanner'
+  },
+  {
     id: 'url-encoder',
     name: 'URL 编码/解码',
     description: '对 URL 进行编码和解码操作',
@@ -26,6 +50,16 @@ export const networkTools: Tool[] = [
     path: '/tool/url-encoder'
   },
   {
+    id: 'user-agent-parser',
+    name: 'User-Agent 解析器',
+    description: '解析浏览器、系统、设备、渲染引擎和爬虫标识',
+    icon: 'mdi:account-search-outline',
+    category: 'network',
+    keywords: ['user-agent', 'ua', '浏览器', '系统', '设备', '爬虫', 'webview'],
+    component: UserAgentParser,
+    path: '/tool/user-agent-parser'
+  },
+  {
     id: 'http-status',
     name: 'HTTP 状态码查询',
     description: '查询 HTTP 状态码的含义和说明',
@@ -34,15 +68,5 @@ export const networkTools: Tool[] = [
     keywords: ['http', 'status', 'code', '状态码', '查询'],
     component: HttpStatus,
     path: '/tool/http-status'
-  },
-  {
-    id: 'subnet-calculator',
-    name: 'CIDR 网段计算器',
-    description: '计算 IPv4 CIDR 网段的网络地址、广播地址、可用主机数等信息',
-    icon: 'mdi:calculator',
-    category: 'network',
-    keywords: ['subnet', 'cidr', '子网', '计算器', 'ip', '网络'],
-    component: SubnetCalculator,
-    path: '/tool/subnet-calculator'
   }
 ]

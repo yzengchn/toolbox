@@ -1,6 +1,8 @@
 import type { Tool } from '@/types'
+import { defineAsyncComponent } from 'vue'
 import TimestampConverter from './TimestampConverter.vue'
-import CronParser from './CronParser.vue'
+
+const CronParser = defineAsyncComponent(() => import('./CronParser.vue'))
 
 export const timeTools: Tool[] = [
   {

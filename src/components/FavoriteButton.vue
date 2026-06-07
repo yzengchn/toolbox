@@ -3,15 +3,16 @@
     text
     size="small"
     class="favorite-btn"
-    :class="{ active: isFavorite }"
-    :title="isFavorite ? '取消收藏' : '收藏工具'"
-    @click="toggleFavorite"
+    :class="{ active: favoriteActive }"
+    :title="favoriteActive ? '取消收藏' : '收藏工具'"
+    :aria-label="favoriteActive ? '取消收藏' : '收藏工具'"
+    @click="handleToggleFavorite"
   >
     <template #icon>
-      <n-icon :size="20">
+      <n-icon :size="18">
         <svg viewBox="0 0 24 24">
           <path
-            :fill="isFavorite ? 'currentColor' : 'none'"
+            :fill="favoriteActive ? 'currentColor' : 'none'"
             stroke="currentColor"
             stroke-width="2"
             stroke-linejoin="round"
@@ -24,28 +25,45 @@
 </template>
 
 <script setup lang="ts">
-import { inject, type ComputedRef } from 'vue'
+import { computed, inject, type ComputedRef } from 'vue'
 import { NButton, NIcon } from 'naive-ui'
 
 const isFavorite = inject<ComputedRef<boolean>>('isFavorite')
 const toggleFavorite = inject<() => void>('toggleFavorite')
+
+const favoriteActive = computed(() => isFavorite?.value ?? false)
+
+const handleToggleFavorite = () => {
+  toggleFavorite?.()
+}
 </script>
 
 <style scoped>
 .favorite-btn {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  border-radius: var(--radius-sm) !important;
+  background: transparent;
+  border: 0 !important;
   color: var(--color-text-tertiary);
-  transition: all 0.2s ease;
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .favorite-btn:hover {
-  color: var(--color-text-secondary);
+  color: var(--color-favorite);
+  background: var(--color-surface-hover);
 }
 
 .favorite-btn.active {
-  color: #f5a524;
+  color: var(--color-favorite);
+  background: var(--color-favorite-soft);
 }
 
 .favorite-btn.active:hover {
-  color: #e09616;
+  color: var(--color-favorite);
 }
 </style>

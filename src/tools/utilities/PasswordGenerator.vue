@@ -90,7 +90,7 @@
         class="password-results-card"
         :style="passwordResultsStyle"
       >
-        <n-space vertical :size="12">
+        <div class="password-list">
           <div v-for="(pwd, index) in passwords" :key="index" class="password-item">
             <n-input
               :value="pwd"
@@ -115,7 +115,7 @@
               </n-tag>
             </div>
           </div>
-        </n-space>
+        </div>
         <template #header-extra>
           <n-button text @click="handleCopyAll">
             复制全部
@@ -305,21 +305,27 @@ const calculateStrength = (pwd: string): number => {
 }
 
 .password-results-card {
-  width: fit-content;
+  width: 100%;
   max-width: 100%;
 }
 
 .password-results-card :deep(.n-card__content) {
   max-width: 100%;
-  overflow-x: auto;
+  overflow-x: visible;
+}
+
+.password-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, clamp(280px, calc(var(--password-length) * 1ch + 150px), 520px)), 1fr));
+  gap: var(--spacing-md);
+  align-items: start;
 }
 
 .password-item {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
-  width: min(calc(var(--password-length) * 1ch + 136px), calc(100vw - var(--spacing-lg) * 2 - 48px));
-  min-width: 240px;
+  min-width: 0;
   max-width: 100%;
 }
 
@@ -356,6 +362,10 @@ const calculateStrength = (pwd: string): number => {
     align-items: flex-start;
     flex-direction: column;
     gap: var(--spacing-sm);
+  }
+
+  .password-list {
+    grid-template-columns: 1fr;
   }
 }
 </style>

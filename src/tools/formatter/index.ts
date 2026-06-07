@@ -1,7 +1,9 @@
 import type { Tool } from '@/types'
-import JsonFormatter from './JsonFormatter.vue'
-import SqlFormatter from './SqlFormatter.vue'
-import XmlFormatter from './XmlFormatter.vue'
+import { defineAsyncComponent } from 'vue'
+
+const JsonFormatter = defineAsyncComponent(() => import('./JsonFormatter.vue'))
+const SqlFormatter = defineAsyncComponent(() => import('./SqlFormatter.vue'))
+const XmlFormatter = defineAsyncComponent(() => import('./XmlFormatter.vue'))
 
 export const formatterTools: Tool[] = [
   {

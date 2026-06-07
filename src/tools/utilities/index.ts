@@ -1,9 +1,11 @@
 import type { Tool } from '@/types'
+import { defineAsyncComponent } from 'vue'
 import PasswordGenerator from './PasswordGenerator.vue'
-import UuidGenerator from './UuidGenerator.vue'
-import QrCodeGenerator from './QrCodeGenerator.vue'
-import ColorConverter from './ColorConverter.vue'
-import Base64ImageTool from './Base64ImageTool.vue'
+
+const UuidGenerator = defineAsyncComponent(() => import('./UuidGenerator.vue'))
+const QrCodeGenerator = defineAsyncComponent(() => import('./QrCodeGenerator.vue'))
+const ColorConverter = defineAsyncComponent(() => import('./ColorConverter.vue'))
+const Base64ImageTool = defineAsyncComponent(() => import('./Base64ImageTool.vue'))
 
 export const utilitiesTools: Tool[] = [
   {

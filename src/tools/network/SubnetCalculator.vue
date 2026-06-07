@@ -128,6 +128,7 @@ import {
   NInput,
   NSpace
 } from 'naive-ui'
+import ToolHeader from '@/components/ToolHeader.vue'
 
 interface SubnetResult {
   ipAddress: string

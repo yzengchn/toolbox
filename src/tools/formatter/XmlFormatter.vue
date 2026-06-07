@@ -75,6 +75,7 @@ import { ref } from 'vue'
 import { NCard, NInput, NInputNumber, NButton, NButtonGroup, NDivider, NSpace, NAlert, NText } from 'naive-ui'
 import ToolHeader from '@/components/ToolHeader.vue'
 import { useClipboard } from '@/composables/useClipboard'
+import { compressXmlLike, formatXmlLike, getErrorMessage } from './utils'
 
 const { copy } = useClipboard()
 
@@ -82,67 +83,40 @@ const input = ref('')
 const error = ref('')
 const indentSize = ref(2)
 
-const handleFormat = () => {
+const resetError = () => {
   error.value = ''
-
-  if (!input.value.trim()) {
-    error.value = '请输入 XML 或 HTML 代码'
-    return
-  }
-
-  try {
-    input.value = formatXml(input.value, indentSize.value)
-  } catch (err) {
-    error.value = '格式化失败: ' + (err as Error).message
-  }
 }
 
-const formatXml = (xml: string, indent: number): string => {
-  const PADDING = ' '.repeat(indent)
-  const reg = /(>)(<)(\/*)/g
-  let formatted = ''
-  let pad = 0
+const ensureInput = (): boolean => {
+  if (input.value.trim()) return true
 
-  xml = xml.replace(reg, '$1\n$2$3')
+  error.value = '请输入 XML 或 HTML 代码'
+  return false
+}
 
-  xml.split('\n').forEach((node) => {
-    let indent = 0
-    if (node.match(/.+<\/\w[^>]*>$/)) {
-      indent = 0
-    } else if (node.match(/^<\/\w/)) {
-      if (pad !== 0) {
-        pad -= 1
-      }
-    } else if (node.match(/^<\w([^>]*[^\/])?>.*$/)) {
-      indent = 1
-    } else {
-      indent = 0
-    }
+const handleFormat = () => {
+  resetError()
 
-    formatted += PADDING.repeat(pad) + node + '\n'
-    pad += indent
-  })
+  if (!ensureInput()) return
 
-  return formatted.trim()
+  try {
+    input.value = formatXmlLike(input.value, indentSize.value)
+  } catch (err) {
+    error.value = `格式化失败: ${getErrorMessage(err, '未知错误')}`
+  }
 }
 
 const handleCompress = () => {
-  error.value = ''
+  resetError()
 
-  if (!input.value.trim()) {
-    error.value = '请输入 XML 或 HTML 代码'
-    return
-  }
+  if (!ensureInput()) return
 
-  input.value = input.value
-    .replace(/>\s+</g, '><')
-    .replace(/\n/g, '')
-    .trim()
+  input.value = compressXmlLike(input.value)
 }
 
 const handleClear = () => {
   input.value = ''
-  error.value = ''
+  resetError()
 }
 
 const handleCopyInput = () => {
@@ -236,9 +210,9 @@ const handleCopyInput = () => {
 
 .controls {
   padding: var(--spacing-md) 0;
-  background: var(--color-bg-secondary);
+  background: var(--color-surface);
   border-radius: var(--radius-md);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: none;
 }
 
 .format-configs {
@@ -255,7 +229,7 @@ const handleCopyInput = () => {
   gap: var(--spacing-sm);
   min-height: 34px;
   padding: 4px 12px;
-  background: var(--color-bg-primary);
+  background: var(--color-surface-muted);
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
 }

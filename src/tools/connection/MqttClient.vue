@@ -656,7 +656,7 @@ onBeforeUnmount(() => {
 }
 
 .log-row--out {
-  border-left-color: #2080f0;
+  border-left-color: var(--color-info);
 }
 
 .log-row--error {

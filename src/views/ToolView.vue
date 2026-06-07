@@ -45,9 +45,6 @@ provide('toggleFavorite', toggleFavorite)
 const toolComponent = computed(() => {
   if (!tool.value) return null
 
-  // 记录最近使用
-  appStore.addRecentTool(props.toolId)
-
   return tool.value.component
 })
 
@@ -56,6 +53,7 @@ watch(
   tool,
   (newTool) => {
     if (newTool) {
+      appStore.addRecentTool(newTool.id)
       document.title = `${newTool.name} - ToolBox`
 
       // 更新meta描述
@@ -90,6 +88,14 @@ watch(
   height: 100%;
   overflow: auto;
   position: relative;
+  background: var(--color-bg-primary);
+}
+
+.tool-view :deep(.tool-container) {
+  width: min(100%, var(--content-max-width));
+  margin: 0 auto;
+  min-height: 100%;
+  padding-top: var(--spacing-sm);
 }
 
 .not-found {
@@ -97,5 +103,12 @@ watch(
   align-items: center;
   justify-content: center;
   height: 100%;
+  padding: var(--spacing-xl);
+}
+
+@media (max-width: 720px) {
+  .tool-view :deep(.tool-container) {
+    width: 100%;
+  }
 }
 </style>

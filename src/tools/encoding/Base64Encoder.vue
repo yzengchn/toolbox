@@ -1,88 +1,114 @@
 <template>
-  <div class="tool-container">
+  <div class="tool-container base64-tool">
     <ToolHeader
       title="Base64 编码/解码"
-      description="支持普通 Base64 和 URL Safe Base64 的文本编码、解码与校验"
+      description="支持 Hex、Base64、Base64URL、Base58、Base58Check、Bech32 的文本编码、解码与校验"
     />
 
     <div class="tool-content">
-      <n-card title="输入" class="input-card">
-        <template #header-extra>
-          <n-space wrap :size="16" align="center">
-            <n-radio-group v-model:value="mode" name="base64-mode">
-              <n-space :size="16">
-                <n-radio value="encode">
-                  编码
-                </n-radio>
-                <n-radio value="decode">
-                  解码
-                </n-radio>
+      <PageTabs v-model:value="encodingType" class="base64-tabs">
+        <n-tab-pane
+          v-for="item in encodingTabs"
+          :key="item.value"
+          :name="item.value"
+          :tab="item.label"
+        >
+          <div class="encoding-pane" :class="{ 'has-options': showEncodingOptions }">
+            <div class="action-bar">
+              <n-radio-group v-model:value="mode" name="encoding-mode">
+                <n-space :size="16">
+                  <n-radio value="encode">
+                    编码
+                  </n-radio>
+                  <n-radio value="decode">
+                    解码
+                  </n-radio>
+                </n-space>
+              </n-radio-group>
+
+              <n-space :size="10">
+                <n-button @click="handleSwap" :disabled="!output">
+                  交换
+                </n-button>
+                <n-button @click="handleClear">
+                  清空
+                </n-button>
               </n-space>
-            </n-radio-group>
+            </div>
 
-            <n-checkbox v-model:checked="urlSafe">
-              使用 URL Safe Base64
-            </n-checkbox>
+            <div v-if="showEncodingOptions" class="format-options">
+              <n-form-item
+                v-if="encodingType === 'base58check'"
+                label="版本字节"
+                :show-feedback="false"
+              >
+                <n-input
+                  v-model:value="base58CheckVersionHex"
+                  placeholder="00"
+                  maxlength="2"
+                  clearable
+                />
+              </n-form-item>
 
-            <n-button @click="handleSwap" :disabled="!output">
-              交换
-            </n-button>
-            <n-button @click="handleClear">
-              清空
-            </n-button>
-          </n-space>
-        </template>
+              <n-form-item
+                v-if="encodingType === 'bech32'"
+                label="HRP"
+                :show-feedback="false"
+              >
+                <n-input
+                  v-model:value="bech32Hrp"
+                  placeholder="tool"
+                  maxlength="24"
+                  clearable
+                />
+              </n-form-item>
+            </div>
 
-        <n-space vertical :size="16" class="editor-stack">
-          <n-input
-            v-model:value="input"
-            type="textarea"
-            :placeholder="inputPlaceholder"
-            :rows="6"
-            class="editor-input"
-            clearable
-          />
-        </n-space>
-      </n-card>
+            <div class="editor-grid">
+              <n-card title="输入" class="editor-card">
+                <n-input
+                  v-model:value="input"
+                  type="textarea"
+                  :placeholder="inputPlaceholder"
+                  :rows="10"
+                  class="editor-input"
+                  clearable
+                />
+              </n-card>
 
-      <n-card title="输出" class="output-card">
-        <template #header-extra>
-          <n-button text :disabled="!output" @click="copy(output)">
-            复制
-          </n-button>
-        </template>
+              <n-card title="输出" class="editor-card">
+                <template #header-extra>
+                  <n-button text :disabled="!output" @click="copy(output)">
+                    复制
+                  </n-button>
+                </template>
 
-        <n-space vertical :size="16" class="editor-stack">
-          <n-input
-            v-model:value="output"
-            type="textarea"
-            placeholder="结果将显示在这里"
-            :rows="8"
-            class="editor-input"
-            readonly
-          />
+                <n-input
+                  v-model:value="output"
+                  type="textarea"
+                  placeholder="结果将显示在这里"
+                  :rows="10"
+                  class="editor-input"
+                  readonly
+                />
+              </n-card>
+            </div>
 
-          <n-alert
-            v-if="output"
-            :type="isValidBase64Output ? 'success' : 'info'"
-            :bordered="false"
-          >
-            {{ isValidBase64Output ? '当前输出是有效的 Base64 文本' : '当前输出是普通文本结果' }}
-          </n-alert>
-        </n-space>
-      </n-card>
+            <n-alert v-if="error" type="error" class="status-card">
+              {{ error }}
+            </n-alert>
 
-      <n-alert v-if="error" type="error" class="status-card">
-        {{ error }}
-      </n-alert>
-
-      <n-card title="说明" class="tips-card">
-        <n-space vertical :size="8">
-          <div>普通 Base64 会保留 `=` 补位字符。</div>
-          <div>URL Safe Base64 会将 `+` 和 `/` 替换为 `-` 和 `_`，并移除末尾补位。</div>
-          <div>解码时会自动兼容普通 Base64 与 URL Safe Base64。</div>
-        </n-space>
-      </n-card>
+            <n-alert
+              v-else-if="output"
+              :type="outputStatusType"
+              :bordered="false"
+              class="status-card"
+            >
+              {{ outputStatusText }}
+            </n-alert>
+          </div>
+        </n-tab-pane>
+      </PageTabs>
     </div>
   </div>
 </template>
@@ -93,30 +119,65 @@ import {
   NAlert,
   NButton,
   NCard,
-  NCheckbox,
+  NFormItem,
   NInput,
   NRadio,
   NRadioGroup,
-  NSpace
+  NSpace,
+  NTabPane
 } from 'naive-ui'
 import { useClipboard } from '@/composables/useClipboard'
-import { decodeBase64, encodeBase64, isValidBase64 } from './utils'
+import {
+  decodeTextByEncoding,
+  encodeTextByEncoding,
+  isValidEncodedText,
+  type TextEncodingType
+} from './utils'
 import ToolHeader from '@/components/ToolHeader.vue'
+import PageTabs from '@/components/PageTabs.vue'
 import { debounce } from '@/utils/debounce'
 
 const { copy } = useClipboard()
 
+const encodingTabs: Array<{ value: TextEncodingType, label: string }> = [
+  { value: 'hex', label: 'Hex (Base16)' },
+  { value: 'base64', label: 'BASE64' },
+  { value: 'base64url', label: 'Base64URL' },
+  { value: 'base58', label: 'Base58' },
+  { value: 'base58check', label: 'Base58Check' },
+  { value: 'bech32', label: 'Bech32' }
+]
+
 const input = ref('')
 const output = ref('')
 const error = ref('')
-const urlSafe = ref(false)
 const mode = ref<'encode' | 'decode'>('encode')
+const encodingType = ref<TextEncodingType>('base64')
+const base58CheckVersionHex = ref('00')
+const bech32Hrp = ref('tool')
 
-const isValidBase64Output = computed(() => output.value.trim() ? isValidBase64(output.value) : false)
+const activeEncodingLabel = computed(() => {
+  return encodingTabs.find(item => item.value === encodingType.value)?.label ?? 'BASE64'
+})
+
+const showEncodingOptions = computed(() => {
+  return encodingType.value === 'base58check' || encodingType.value === 'bech32'
+})
+
 const inputPlaceholder = computed(() => (
   mode.value === 'encode'
-    ? '输入要编码的文本'
-    : '输入要解码的 Base64 内容'
+    ? `输入要编码为 ${activeEncodingLabel.value} 的文本`
+    : `输入要解码的 ${activeEncodingLabel.value} 内容`
+))
+
+const outputStatusType = computed(() => (
+  mode.value === 'encode' || isValidEncodedText(output.value, encodingType.value) ? 'success' : 'info'
+))
+
+const outputStatusText = computed(() => (
+  mode.value === 'encode'
+    ? `当前输出是有效的 ${activeEncodingLabel.value} 文本`
+    : '当前输出是解码后的 UTF-8 文本'
 ))
 
 const updateOutput = () => {
@@ -129,8 +190,11 @@ const updateOutput = () => {
 
   try {
     output.value = mode.value === 'encode'
-      ? encodeBase64(input.value, urlSafe.value)
-      : decodeBase64(input.value)
+      ? encodeTextByEncoding(input.value, encodingType.value, {
+        base58CheckVersionHex: base58CheckVersionHex.value,
+        bech32Hrp: bech32Hrp.value
+      })
+      : decodeTextByEncoding(input.value, encodingType.value)
   } catch (decodeError) {
     output.value = ''
     error.value = (decodeError as Error).message
@@ -154,70 +218,214 @@ const handleClear = () => {
 // 创建防抖版本用于输入变化
 const debouncedUpdateOutput = debounce(updateOutput, 300)
 
-watch([input, mode, urlSafe], debouncedUpdateOutput)
+watch([input, mode, encodingType, base58CheckVersionHex, bech32Hrp], debouncedUpdateOutput)
 </script>
 
 <style scoped>
-.tool-container {
-  padding: var(--spacing-lg);
-}
-
-.tool-header {
-  margin-bottom: var(--spacing-xl);
-}
-
-.tool-header h2 {
-  font-size: var(--font-size-2xl, 28px);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0 0 var(--spacing-xs) 0;
-}
-
-.description {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  margin: 0;
+.base64-tool.tool-container {
+  height: 100%;
+  min-height: 0;
+  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .tool-content {
   width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
 }
 
-.editor-stack {
+.base64-tabs {
   width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.base64-tabs :deep(.n-tabs-nav) {
+  flex: 0 0 auto;
+}
+
+.base64-tabs :deep(.n-tabs-pane-wrapper) {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.base64-tabs :deep(.n-tab-pane) {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.encoding-pane {
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: var(--spacing-sm);
+  overflow: hidden;
+}
+
+.encoding-pane.has-options {
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+}
+
+.action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  min-height: 42px;
+  padding: 6px var(--spacing-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+}
+
+.format-options {
+  display: grid;
+  grid-template-columns: minmax(160px, 260px);
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.format-options :deep(.n-form-item) {
+  margin-bottom: 0;
+}
+
+.editor-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  min-height: 0;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+  overflow: hidden;
+}
+
+.editor-card {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border-strong) !important;
+  border-radius: var(--radius-md);
+  box-shadow: none !important;
+  background: var(--color-surface) !important;
+}
+
+.editor-card :deep(.n-card-header) {
+  flex: 0 0 auto;
+  min-height: 38px;
+  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-xs) !important;
+}
+
+.editor-card :deep(.n-card__content) {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  padding: 0 var(--spacing-md) var(--spacing-md) !important;
+  display: flex;
 }
 
 .editor-input {
   width: 100%;
+  height: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
-.input-card :deep(.n-card-header) {
-  gap: 12px;
+.editor-card :deep(.n-input) {
+  height: 100%;
+  min-height: 0;
 }
 
-.input-card :deep(.n-card-header__extra) {
-  display: flex;
-  align-items: center;
+.editor-input :deep(.n-input-wrapper),
+.editor-input :deep(.n-input__textarea) {
+  height: 100%;
+  min-height: 0;
 }
 
-.input-card :deep(.n-card__content),
-.output-card :deep(.n-card__content) {
-  width: 100%;
+.editor-input :deep(.n-input__textarea-el) {
+  min-height: 0 !important;
+  height: 100% !important;
+  font-family: var(--font-mono);
+  line-height: 1.45;
+  resize: none;
 }
 
-.editor-stack :deep(.n-space-item) {
-  width: 100%;
-}
-
-.output-card,
-.tips-card,
 .status-card {
-  margin-top: 16px;
+  margin-top: 0;
+  min-height: 0;
 }
 
 @media (max-width: 768px) {
-  .tool-container {
+  .base64-tool.tool-container {
     padding: var(--spacing-md);
+  }
+
+  .action-bar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .editor-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+@media (max-height: 760px) {
+  .base64-tool.tool-container {
+    padding: var(--spacing-xs) var(--spacing-md) var(--spacing-sm);
+  }
+
+  .base64-tool :deep(.tool-header) {
+    margin-bottom: var(--spacing-xs);
+    padding: 6px var(--spacing-md);
+  }
+
+  .base64-tool :deep(.description) {
+    display: none;
+  }
+
+  .encoding-pane {
+    gap: var(--spacing-xs);
+  }
+
+  .action-bar {
+    min-height: 36px;
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+
+  .format-options {
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+
+  .editor-grid {
+    padding: var(--spacing-xs);
+  }
+
+  .editor-card :deep(.n-card-header) {
+    min-height: 32px;
+    padding: var(--spacing-xs) var(--spacing-sm) 2px !important;
+  }
+
+  .editor-card :deep(.n-card__content) {
+    padding: 0 var(--spacing-sm) var(--spacing-sm) !important;
   }
 }
 </style>

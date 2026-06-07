@@ -4,6 +4,7 @@
       <n-button
         text
         class="menu-btn"
+        :aria-label="appStore.sidebarCollapsed ? '展开侧边栏' : '收起侧边栏'"
         @click="appStore.toggleSidebar"
       >
         <template #icon>
@@ -16,7 +17,10 @@
       </n-button>
       <div class="logo">
         <img src="/logo-icon.png" alt="ToolBox" class="logo-icon" />
-        <span class="logo-text">ToolBox</span>
+        <span class="logo-copy">
+          <span class="logo-text">ToolBox</span>
+          <span class="logo-subtitle">Developer Toolkit</span>
+        </span>
       </div>
 
       <nav v-if="favoriteTools.length" class="quick-bookmarks" aria-label="快速书签">
@@ -37,12 +41,16 @@
       <!-- 搜索框 -->
       <div class="search-wrapper">
         <n-auto-complete
-          v-model:value="searchQuery"
+          :value="searchQuery"
           :options="searchOptions"
+          :render-label="renderSearchLabel"
+          :get-show="getSearchDropdownShow"
+          :menu-props="{ class: 'tool-search-menu' }"
           placeholder="搜索工具..."
           clearable
           size="small"
           class="tool-search"
+          @update:value="handleSearchUpdate"
           @select="handleSelectTool"
         >
           <template #prefix>
@@ -75,6 +83,7 @@
           :type="!isDark ? 'primary' : 'default'"
           :secondary="isDark"
           class="theme-btn"
+          aria-label="切换到浅色模式"
           @click="setTheme('light')"
         >
           <template #icon>
@@ -90,6 +99,7 @@
           :type="isDark ? 'primary' : 'default'"
           :secondary="!isDark"
           class="theme-btn"
+          aria-label="切换到深色模式"
           @click="setTheme('dark')"
         >
           <template #icon>
@@ -106,111 +116,92 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, h, nextTick, ref, type VNodeChild } from 'vue'
 import { useRouter } from 'vue-router'
 import { NAutoComplete, NButton, NButtonGroup, NIcon, type AutoCompleteOption } from 'naive-ui'
 import { useTheme } from '@/composables/useTheme'
 import { useAppStore } from '@/stores/app'
-import { allTools } from '@/tools'
+import { getToolByPath, getToolCategoryName, getToolsByIds, searchTools } from '@/tools'
+import type { Tool } from '@/types'
 
 const router = useRouter()
 const { isDark, setTheme } = useTheme()
 const appStore = useAppStore()
 
 const favoriteTools = computed(() => {
-  return appStore.favorites
-    .map(id => allTools.find(tool => tool.id === id))
-    .filter((tool): tool is NonNullable<typeof tool> => tool !== undefined)
+  return getToolsByIds(appStore.favorites)
 })
 
 // 搜索功能
 const searchQuery = ref('')
 
 type SearchOption = AutoCompleteOption & {
+  tool?: Tool
   description?: string
-  type?: 'recent' | 'favorite' | 'search'
+  categoryName?: string
 }
 
-const searchOptions = computed(() => {
-  const query = searchQuery.value.toLowerCase().trim()
-
-  if (!query) {
-    const options: SearchOption[] = []
-
-    // 添加最近使用的工具
-    const recentToolsList = appStore.recentTools
-      .map(id => allTools.find(tool => tool.id === id))
-      .filter((tool): tool is NonNullable<typeof tool> => tool !== undefined)
-      .slice(0, 5)
-
-    if (recentToolsList.length > 0) {
-      options.push({
-        label: '── 最近使用 ──',
-        value: 'header-recent',
-        type: 'recent'
-      })
-      recentToolsList.forEach(tool => {
-        options.push({
-          label: `🕐 ${tool.name}`,
-          value: tool.path,
-          description: tool.description,
-          type: 'recent'
-        })
-      })
-    }
-
-    // 添加收藏的工具
-    const favoritesList = appStore.favorites
-      .map(id => allTools.find(tool => tool.id === id))
-      .filter((tool): tool is NonNullable<typeof tool> => tool !== undefined)
-      .slice(0, 5)
-
-    if (favoritesList.length > 0) {
-      options.push({
-        label: '── 我的收藏 ──',
-        value: 'header-favorite',
-        type: 'favorite'
-      })
-      favoritesList.forEach(tool => {
-        options.push({
-          label: `⭐ ${tool.name}`,
-          value: tool.path,
-          description: tool.description,
-          type: 'favorite'
-        })
-      })
-    }
-
-    return options
-  }
-
-  // 搜索工具名称、描述和关键词
-  const results = allTools.filter(tool => {
-    const searchText = [
-      tool.name,
-      tool.description,
-      ...tool.keywords
-    ].join(' ').toLowerCase()
-
-    return searchText.includes(query)
-  })
-
-  // 限制结果数量
-  return results.slice(0, 8).map(tool => ({
-    label: tool.name,
-    value: tool.path,
-    description: tool.description,
-    type: 'search' as const
-  }))
+const createToolSearchOption = (tool: Tool): SearchOption => ({
+  label: tool.name,
+  value: tool.path,
+  tool,
+  description: tool.description,
+  categoryName: getToolCategoryName(tool.category)
 })
 
-const handleSelectTool = (value: string) => {
+const searchOptions = computed(() => {
+  const query = searchQuery.value.trim()
+
+  if (!query) {
+    const searchHistoryList = getToolsByIds(appStore.searchHistory)
+      .slice(0, 3)
+      .map(tool => createToolSearchOption(tool))
+
+    const recentToolsList = getToolsByIds(appStore.recentTools)
+      .slice(0, 3)
+      .map(tool => createToolSearchOption(tool))
+
+    return [...searchHistoryList, ...recentToolsList]
+  }
+
+  return searchTools(query, 8).map(tool => createToolSearchOption(tool))
+})
+
+const renderSearchLabel = (option: AutoCompleteOption): VNodeChild => {
+  const searchOption = option as SearchOption
+
+  return h('div', { class: 'search-option' }, [
+    h('div', { class: 'search-option__main' }, [
+      h('span', { class: 'search-option__name' }, String(searchOption.tool?.name ?? searchOption.label ?? '')),
+      searchOption.categoryName
+        ? h('span', { class: 'search-option__category' }, searchOption.categoryName)
+        : null
+    ]),
+    searchOption.description
+      ? h('div', { class: 'search-option__description' }, searchOption.description)
+      : null
+  ])
+}
+
+const getSearchDropdownShow = () => searchOptions.value.length > 0
+
+const handleSearchUpdate = (value: string | null) => {
+  searchQuery.value = value ?? ''
+}
+
+const handleSelectTool = async (value: string) => {
   // 忽略标题行
   if (value.startsWith('header-')) {
     return
   }
 
+  const selectedTool = getToolByPath(value)
+  if (selectedTool) {
+    appStore.addSearchHistory(selectedTool.id)
+  }
+
   router.push(value)
+  await nextTick()
   searchQuery.value = ''
 }
 </script>
@@ -221,30 +212,47 @@ const handleSelectTool = (value: string) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--spacing-md);
   padding: 0 var(--spacing-lg);
-  background-color: var(--color-bg-secondary);
+  background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
+  box-shadow: none;
+  position: relative;
+  z-index: 20;
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
+  gap: var(--spacing-sm);
   min-width: 0;
   flex: 1;
 }
 
 .menu-btn {
-  font-size: 20px;
+  font-size: 18px;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm) !important;
+  color: var(--color-text-secondary);
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+}
+
+.menu-btn:hover {
+  color: var(--color-text-primary);
+  background: var(--color-surface-hover);
+  border-color: var(--color-border-strong);
 }
 
 .logo {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  font-size: var(--font-size-lg);
-  font-weight: 600;
+  gap: 8px;
+  flex: 0 0 auto;
   color: var(--color-text-primary);
+  min-width: 0;
 }
 
 .logo-icon {
@@ -252,104 +260,232 @@ const handleSelectTool = (value: string) => {
   height: 28px;
   object-fit: contain;
   background: transparent;
+  border-radius: var(--radius-sm);
+  box-shadow: none;
+}
+
+.logo-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.1;
+}
+
+.logo-text {
+  font-size: var(--font-size-base);
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.logo-subtitle {
+  margin-top: 1px;
+  color: var(--color-text-tertiary);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .quick-bookmarks {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--spacing-xs);
   min-width: 0;
-  max-width: min(40vw, 600px);
+  max-width: min(38vw, 620px);
   overflow-x: auto;
   padding: 2px 0;
+  scrollbar-width: none;
+}
+
+.quick-bookmarks::-webkit-scrollbar {
+  display: none;
 }
 
 .bookmark-link {
   flex: 0 0 auto;
-  max-width: 128px;
-  padding: 5px 10px;
-  border-radius: var(--radius-sm);
+  max-width: 140px;
+  padding: 6px 11px;
+  border-radius: var(--radius-pill);
   color: var(--color-text-secondary);
-  background: var(--color-bg-primary);
+  background: var(--color-surface-muted);
   border: 1px solid var(--color-border);
   text-decoration: none;
   font-size: var(--font-size-xs);
-  line-height: 1.2;
+  font-weight: 650;
+  line-height: 1.15;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast);
 }
 
 .bookmark-link:hover {
   color: var(--color-text-primary);
-  border-color: var(--color-primary);
+  background: var(--color-surface-hover);
+  border-color: var(--color-border-strong);
 }
 
 .bookmark-link.active {
   color: var(--color-primary);
-  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  border-color: var(--color-border-strong);
 }
 
 .header-right {
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
+  gap: var(--spacing-sm);
   flex: 0 0 auto;
 }
 
 .search-wrapper {
-  width: 220px;
+  width: clamp(210px, 24vw, 340px);
 }
 
 .tool-search {
   width: 100%;
 }
 
+.tool-search :deep(.n-input) {
+  background: var(--color-surface-muted) !important;
+  border-radius: var(--radius-pill) !important;
+}
+
+:global(.tool-search-menu) {
+  padding: 5px 0;
+}
+
+:global(.tool-search-menu .n-base-select-option) {
+  min-height: 48px;
+  margin: 2px 6px;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+}
+
+:global(.tool-search-menu .n-base-select-option::before) {
+  inset: 0;
+  border-radius: var(--radius-sm);
+}
+
+:global(.tool-search-menu .n-virtual-list) {
+  padding: 2px 0;
+}
+
+.tool-search :deep(.search-option) {
+  min-width: 0;
+  padding: 1px 0;
+}
+
+.tool-search :deep(.search-option__main) {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  min-width: 0;
+}
+
+.tool-search :deep(.search-option__name) {
+  min-width: 0;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: 650;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tool-search :deep(.search-option__category) {
+  flex: 0 0 auto;
+  max-width: 86px;
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.45;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tool-search :deep(.search-option__description) {
+  margin-top: 2px;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .github-link {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: var(--radius-sm);
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
   color: var(--color-text-secondary);
-  transition: all 0.2s ease;
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast);
   text-decoration: none;
 }
 
 .github-link:hover {
   color: var(--color-text-primary);
-  background-color: var(--color-bg-tertiary);
+  background-color: var(--color-surface-hover);
+  border-color: var(--color-border-strong);
 }
 
 .theme-switch {
   display: flex;
   align-items: center;
+  padding: 2px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
 }
 
 .theme-btn {
-  font-weight: 500;
+  width: 28px;
+  font-weight: 700;
 }
 
 @media (max-width: 1100px) {
   .search-wrapper {
-    width: 180px;
+    width: 190px;
   }
 
   .quick-bookmarks {
-    max-width: 30vw;
+    max-width: 28vw;
   }
 }
 
 @media (max-width: 900px) {
   .quick-bookmarks {
-    max-width: 20vw;
+    max-width: 24vw;
   }
 }
 
 @media (max-width: 768px) {
+  .app-header {
+    padding: 0 var(--spacing-md);
+    gap: var(--spacing-sm);
+  }
+
+  .logo-subtitle {
+    display: none;
+  }
+
   .search-wrapper {
-    width: 160px;
+    width: min(38vw, 190px);
   }
 }
 
@@ -359,7 +495,25 @@ const handleSelectTool = (value: string) => {
   }
 
   .search-wrapper {
-    width: 140px;
+    width: 42vw;
+  }
+
+  .github-link {
+    display: none;
+  }
+}
+
+@media (max-width: 500px) {
+  .logo-copy {
+    display: none;
+  }
+
+  .search-wrapper {
+    width: min(48vw, 190px);
+  }
+
+  .theme-switch {
+    display: none;
   }
 }
 </style>

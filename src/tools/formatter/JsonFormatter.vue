@@ -112,6 +112,14 @@ import { NCard, NInput, NInputNumber, NCheckbox, NButton, NButtonGroup, NDivider
 import ToolHeader from '@/components/ToolHeader.vue'
 import { useClipboard } from '@/composables/useClipboard'
 import { debounce } from '@/utils/debounce'
+import {
+  compressJson,
+  escapeJsonString,
+  formatJson,
+  getErrorMessage,
+  parseJsonValue,
+  unescapeJsonString
+} from './utils'
 
 const { copy } = useClipboard()
 
@@ -122,9 +130,20 @@ const valid = ref(false)
 const indentSize = ref(4)
 const sortKeys = ref(false)
 
-const handleInput = () => {
+const resetFeedback = () => {
   error.value = ''
   valid.value = false
+}
+
+const ensureInput = (message: string): boolean => {
+  if (input.value.trim()) return true
+
+  error.value = message
+  return false
+}
+
+const handleInput = () => {
+  resetFeedback()
 
   if (!input.value.trim()) {
     output.value = ''
@@ -132,10 +151,11 @@ const handleInput = () => {
   }
 
   try {
-    const parsed = JSON.parse(input.value)
-    const sorted = sortKeys.value ? sortObjectKeys(parsed) : parsed
-    output.value = JSON.stringify(sorted, null, indentSize.value)
-  } catch (err) {
+    output.value = formatJson(input.value, {
+      indentSize: indentSize.value,
+      sortKeys: sortKeys.value
+    })
+  } catch {
     // 实时预览时不显示错误，只在用户点击验证时显示
     output.value = ''
   }
@@ -145,104 +165,69 @@ const handleInput = () => {
 const debouncedHandleInput = debounce(handleInput, 300)
 
 const handleFormat = () => {
-  error.value = ''
-  valid.value = false
+  resetFeedback()
 
-  if (!input.value.trim()) {
-    error.value = '请输入 JSON 数据'
-    return
-  }
+  if (!ensureInput('请输入 JSON 数据')) return
 
   try {
-    const parsed = JSON.parse(input.value)
-    const sorted = sortKeys.value ? sortObjectKeys(parsed) : parsed
-    output.value = JSON.stringify(sorted, null, indentSize.value)
+    output.value = formatJson(input.value, {
+      indentSize: indentSize.value,
+      sortKeys: sortKeys.value
+    })
   } catch (err) {
-    error.value = 'JSON 格式错误: ' + (err as Error).message
+    error.value = `JSON 格式错误: ${getErrorMessage(err, '未知错误')}`
   }
 }
 
 const handleCompress = () => {
-  error.value = ''
-  valid.value = false
+  resetFeedback()
 
-  if (!input.value.trim()) {
-    error.value = '请输入 JSON 数据'
-    return
-  }
+  if (!ensureInput('请输入 JSON 数据')) return
 
   try {
-    const parsed = JSON.parse(input.value)
-    output.value = JSON.stringify(parsed)
+    output.value = compressJson(input.value)
   } catch (err) {
-    error.value = 'JSON 格式错误: ' + (err as Error).message
+    error.value = `JSON 格式错误: ${getErrorMessage(err, '未知错误')}`
   }
 }
 
 const handleValidate = () => {
-  error.value = ''
-  valid.value = false
+  resetFeedback()
 
-  if (!input.value.trim()) {
-    error.value = '请输入 JSON 数据'
-    return
-  }
+  if (!ensureInput('请输入 JSON 数据')) return
 
   try {
-    JSON.parse(input.value)
+    parseJsonValue(input.value)
     valid.value = true
   } catch (err) {
-    error.value = 'JSON 格式错误: ' + (err as Error).message
+    error.value = `JSON 格式错误: ${getErrorMessage(err, '未知错误')}`
   }
 }
 
 const handleEscape = () => {
-  error.value = ''
-  valid.value = false
+  resetFeedback()
 
-  if (!input.value.trim()) {
-    error.value = '请输入数据'
-    return
-  }
+  if (!ensureInput('请输入数据')) return
 
-  output.value = JSON.stringify(input.value)
+  output.value = escapeJsonString(input.value)
 }
 
 const handleUnescape = () => {
-  error.value = ''
-  valid.value = false
+  resetFeedback()
 
-  if (!input.value.trim()) {
-    error.value = '请输入数据'
-    return
-  }
+  if (!ensureInput('请输入数据')) return
 
   try {
-    output.value = JSON.parse(input.value)
+    output.value = unescapeJsonString(input.value)
   } catch (err) {
-    error.value = '反转义失败: ' + (err as Error).message
+    error.value = `反转义失败: ${getErrorMessage(err, '未知错误')}`
   }
-}
-
-const sortObjectKeys = (obj: any): any => {
-  if (Array.isArray(obj)) {
-    return obj.map(sortObjectKeys)
-  } else if (obj !== null && typeof obj === 'object') {
-    return Object.keys(obj)
-      .sort()
-      .reduce((result, key) => {
-        result[key] = sortObjectKeys(obj[key])
-        return result
-      }, {} as any)
-  }
-  return obj
 }
 
 const handleClear = () => {
   input.value = ''
   output.value = ''
-  error.value = ''
-  valid.value = false
+  resetFeedback()
 }
 
 const handleCopyOutput = () => {
@@ -355,9 +340,10 @@ const handleCopyOutput = () => {
 
 .controls {
   padding: var(--spacing-md) 0;
-  background: var(--color-bg-secondary);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: none;
 }
 
 .config-group {
@@ -366,7 +352,7 @@ const handleCopyOutput = () => {
   gap: var(--spacing-sm);
   min-height: 34px;
   padding: 4px 12px;
-  background: var(--color-bg-primary);
+  background: var(--color-surface-muted);
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
 }

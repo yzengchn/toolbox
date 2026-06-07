@@ -221,7 +221,8 @@ const getAlertType = (code: number): 'success' | 'info' | 'warning' | 'error' =>
   align-items: center;
   gap: var(--spacing-md);
   padding: var(--spacing-md);
-  background: var(--color-bg-tertiary);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
 }
 
@@ -233,28 +234,28 @@ const getAlertType = (code: number): 'success' | 'info' | 'warning' | 'error' =>
 }
 
 .status-code-display .code.success {
-  background: #18a058;
-  color: white;
+  background: var(--color-success);
+  color: var(--color-semantic-contrast);
 }
 
 .status-code-display .code.redirect {
-  background: #2080f0;
-  color: white;
+  background: var(--color-info);
+  color: var(--color-semantic-contrast);
 }
 
 .status-code-display .code.client-error {
-  background: #f0a020;
-  color: white;
+  background: var(--color-warning);
+  color: var(--color-semantic-contrast);
 }
 
 .status-code-display .code.server-error {
-  background: #d03050;
-  color: white;
+  background: var(--color-error);
+  color: var(--color-semantic-contrast);
 }
 
 .status-code-display .code.info {
-  background: #909399;
-  color: white;
+  background: var(--color-text-tertiary);
+  color: var(--color-semantic-contrast);
 }
 
 .status-code-display .name {
@@ -275,39 +276,42 @@ const getAlertType = (code: number): 'success' | 'info' | 'warning' | 'error' =>
   align-items: center;
   gap: var(--spacing-sm);
   padding: var(--spacing-sm);
-  background: var(--color-bg-tertiary);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
 }
 
 .status-item:hover {
-  background: var(--color-bg-quaternary);
-  transform: translateY(-2px);
+  background: var(--color-surface-hover);
+  border-color: var(--color-border-strong);
 }
 
 .code-badge {
   font-weight: 600;
   padding: 2px 8px;
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-sm);
   font-size: var(--font-size-xs);
-  color: white;
+  color: var(--color-semantic-contrast);
 }
 
 .code-badge.success {
-  background: #18a058;
+  background: var(--color-success);
 }
 
 .code-badge.redirect {
-  background: #2080f0;
+  background: var(--color-info);
 }
 
 .code-badge.client-error {
-  background: #f0a020;
+  background: var(--color-warning);
 }
 
 .code-badge.server-error {
-  background: #d03050;
+  background: var(--color-error);
 }
 
 .code-name {

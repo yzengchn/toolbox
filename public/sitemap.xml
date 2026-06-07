@@ -14,12 +14,17 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://tools.neocockpit.cn/tool/hash-calculator</loc>
+    <loc>https://tools.neocockpit.cn/tool/jwt-decoder</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://tools.neocockpit.cn/tool/jwt-decoder</loc>
+    <loc>https://tools.neocockpit.cn/tool/encryption-tool</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://tools.neocockpit.cn/tool/hash-calculator</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -31,12 +36,12 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://tools.neocockpit.cn/tool/xml-formatter</loc>
+    <loc>https://tools.neocockpit.cn/tool/sql-formatter</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://tools.neocockpit.cn/tool/sql-formatter</loc>
+    <loc>https://tools.neocockpit.cn/tool/xml-formatter</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -55,12 +60,12 @@
 
   <!-- 实用工具 -->
   <url>
-    <loc>https://tools.neocockpit.cn/tool/uuid-generator</loc>
+    <loc>https://tools.neocockpit.cn/tool/password-generator</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://tools.neocockpit.cn/tool/password-generator</loc>
+    <loc>https://tools.neocockpit.cn/tool/uuid-generator</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -74,10 +79,45 @@
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
+  <url>
+    <loc>https://tools.neocockpit.cn/tool/base64-image</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
 
   <!-- 车联网工具 -->
   <url>
-    <loc>https://tools.neocockpit.cn/tool/vehicle-iot-tool</loc>
+    <loc>https://tools.neocockpit.cn/tool/jt808-jt809-parser</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://tools.neocockpit.cn/tool/gb32960-parser</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://tools.neocockpit.cn/tool/gbt27930-parser</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://tools.neocockpit.cn/tool/ocpp-message-tool</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://tools.neocockpit.cn/tool/can-j1939-decoder</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://tools.neocockpit.cn/tool/obd-uds-diagnostic</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://tools.neocockpit.cn/tool/coordinate-converter</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -86,18 +126,18 @@
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
+  <url>
+    <loc>https://tools.neocockpit.cn/tool/track-map-viewer</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://tools.neocockpit.cn/tool/vehicle-log-timeline</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
 
   <!-- 网络工具 -->
-  <url>
-    <loc>https://tools.neocockpit.cn/tool/url-encoder</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://tools.neocockpit.cn/tool/http-status</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
   <url>
     <loc>https://tools.neocockpit.cn/tool/ip-lookup</loc>
     <changefreq>weekly</changefreq>
@@ -105,6 +145,26 @@
   </url>
   <url>
     <loc>https://tools.neocockpit.cn/tool/subnet-calculator</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://tools.neocockpit.cn/tool/port-scanner</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://tools.neocockpit.cn/tool/url-encoder</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://tools.neocockpit.cn/tool/user-agent-parser</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://tools.neocockpit.cn/tool/http-status</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>

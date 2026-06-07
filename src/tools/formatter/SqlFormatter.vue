@@ -89,19 +89,20 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { NCard, NInput, NInputNumber, NSelect, NCheckbox, NButton, NButtonGroup, NDivider, NSpace, NAlert, NText } from 'naive-ui'
-import { format } from 'sql-formatter'
+import { format, type SqlLanguage } from 'sql-formatter'
 import ToolHeader from '@/components/ToolHeader.vue'
 import { useClipboard } from '@/composables/useClipboard'
+import { compressWhitespace, getErrorMessage } from './utils'
 
 const { copy } = useClipboard()
 
 const input = ref('')
 const error = ref('')
-const language = ref('sql')
+const language = ref<SqlLanguage>('sql')
 const indentSize = ref(2)
 const uppercase = ref(true)
 
-const languageOptions = [
+const languageOptions: Array<{ label: string, value: SqlLanguage }> = [
   { label: 'SQL (通用)', value: 'sql' },
   { label: 'MySQL', value: 'mysql' },
   { label: 'PostgreSQL', value: 'postgresql' },
@@ -111,39 +112,44 @@ const languageOptions = [
   { label: 'Oracle PL/SQL', value: 'plsql' }
 ]
 
-const handleFormat = () => {
+const resetError = () => {
   error.value = ''
+}
 
-  if (!input.value.trim()) {
-    error.value = '请输入 SQL 语句'
-    return
-  }
+const ensureInput = (): boolean => {
+  if (input.value.trim()) return true
+
+  error.value = '请输入 SQL 语句'
+  return false
+}
+
+const handleFormat = () => {
+  resetError()
+
+  if (!ensureInput()) return
 
   try {
     input.value = format(input.value, {
-      language: language.value as any,
+      language: language.value,
       tabWidth: indentSize.value,
       keywordCase: uppercase.value ? 'upper' : 'lower'
     })
   } catch (err) {
-    error.value = '格式化失败: ' + (err as Error).message
+    error.value = `格式化失败: ${getErrorMessage(err, '未知错误')}`
   }
 }
 
 const handleCompress = () => {
-  error.value = ''
+  resetError()
 
-  if (!input.value.trim()) {
-    error.value = '请输入 SQL 语句'
-    return
-  }
+  if (!ensureInput()) return
 
-  input.value = input.value.replace(/\s+/g, ' ').trim()
+  input.value = compressWhitespace(input.value)
 }
 
 const handleClear = () => {
   input.value = ''
-  error.value = ''
+  resetError()
 }
 
 const handleCopyInput = () => {
@@ -237,9 +243,9 @@ const handleCopyInput = () => {
 
 .controls {
   padding: var(--spacing-md) 0;
-  background: var(--color-bg-secondary);
+  background: var(--color-surface);
   border-radius: var(--radius-md);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: none;
 }
 
 .format-configs {
@@ -256,7 +262,7 @@ const handleCopyInput = () => {
   gap: var(--spacing-sm);
   min-height: 34px;
   padding: 4px 12px;
-  background: var(--color-bg-primary);
+  background: var(--color-surface-muted);
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
 }

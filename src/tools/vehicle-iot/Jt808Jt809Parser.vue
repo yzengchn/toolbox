@@ -1,12 +1,12 @@
 <template>
   <div class="tool-container">
     <ToolHeader
-      title="国标解析"
-      description="JT808/JT809 报文解析、基础组包、Hex 转换和常用字段换算"
+      title="JT808/JT809 解析"
+      description="JT808 与 JT809 报文解析、基础组包、Hex 转换和常用字段换算"
     />
 
     <div class="tool-content">
-      <n-tabs type="line" animated>
+      <PageTabs>
         <n-tab-pane name="parse" tab="JT808 解析">
           <div class="workspace-grid">
             <n-card class="panel-card" title="报文输入">
@@ -29,6 +29,18 @@
             <div class="result-stack">
               <n-alert v-if="parseError" type="error">{{ parseError }}</n-alert>
               <n-empty v-if="!parseResults.length && !parseError" description="解析结果将在这里展示" />
+
+              <div v-if="parseResults.length" class="parse-summary">
+                <div
+                  v-for="item in jt808Summary"
+                  :key="item.label"
+                  class="summary-tile"
+                  :class="item.status ? `summary-tile--${item.status}` : undefined"
+                >
+                  <span>{{ item.label }}</span>
+                  <strong>{{ item.value }}</strong>
+                </div>
+              </div>
 
               <n-card
                 v-for="item in parseResults"
@@ -164,6 +176,18 @@
             <div class="result-stack">
               <n-alert v-if="jt809ParseError" type="error">{{ jt809ParseError }}</n-alert>
               <n-empty v-if="!jt809ParseResults.length && !jt809ParseError" description="解析结果将在这里展示" />
+
+              <div v-if="jt809ParseResults.length" class="parse-summary">
+                <div
+                  v-for="item in jt809Summary"
+                  :key="item.label"
+                  class="summary-tile"
+                  :class="item.status ? `summary-tile--${item.status}` : undefined"
+                >
+                  <span>{{ item.label }}</span>
+                  <strong>{{ item.value }}</strong>
+                </div>
+              </div>
 
               <n-card
                 v-for="item in jt809ParseResults"
@@ -350,13 +374,13 @@
           </n-card>
         </n-tab-pane>
 
-      </n-tabs>
+      </PageTabs>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import {
   NAlert,
   NButton,
@@ -375,7 +399,6 @@ import {
   NSelect,
   NSpace,
   NTabPane,
-  NTabs,
   NTag
 } from 'naive-ui'
 import {
@@ -394,6 +417,8 @@ import {
   type Jt808ParseResult,
   type Jt809ParseResult
 } from './utils'
+import ToolHeader from '@/components/ToolHeader.vue'
+import PageTabs from '@/components/PageTabs.vue'
 import { useClipboard } from '@/composables/useClipboard'
 
 const { copy } = useClipboard()
@@ -466,6 +491,40 @@ const encodingOptions = [
   'ISO-8859-1',
   'WINDOWS-1252'
 ].map(value => ({ label: value, value }))
+
+type ParseResult = Jt808ParseResult | Jt809ParseResult
+
+const jt808Summary = computed(() => buildParseSummary(parseResults.value))
+const jt809Summary = computed(() => buildParseSummary(jt809ParseResults.value))
+
+const buildParseSummary = (results: ParseResult[]) => {
+  const total = results.length
+  const checksumPassed = results.filter(item => item.checksum.matched).length
+  const abnormal = results.filter(item => item.error || !item.checksum.matched).length
+  const withBoundary = results.filter(item => item.validBoundary).length
+  const messageTypes = Array.from(new Set(
+    results.map(item => item.header ? `${item.header.msgId} ${item.header.msgName}` : '未识别')
+  ))
+  const typeText = messageTypes.length
+    ? `${messageTypes.slice(0, 2).join(' / ')}${messageTypes.length > 2 ? ` +${messageTypes.length - 2}` : ''}`
+    : '-'
+
+  return [
+    { label: '总包数', value: total },
+    {
+      label: '校验通过',
+      value: checksumPassed,
+      status: checksumPassed === total ? 'success' : 'warning'
+    },
+    {
+      label: '异常',
+      value: abnormal,
+      status: abnormal ? 'error' : 'success'
+    },
+    { label: '边界完整', value: `${withBoundary}/${total}` },
+    { label: '消息类型', value: typeText }
+  ]
+}
 
 const handleParse = () => {
   parseError.value = ''
@@ -672,6 +731,54 @@ handleNowTime()
   min-width: 0;
 }
 
+.parse-summary {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--spacing-sm);
+}
+
+.summary-tile {
+  min-height: 70px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+}
+
+.summary-tile span {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+}
+
+.summary-tile strong {
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-base);
+  line-height: 1.35;
+  word-break: break-all;
+}
+
+.summary-tile--success {
+  border-color: rgba(0, 186, 124, 0.38);
+  background: rgba(0, 186, 124, 0.08);
+}
+
+.summary-tile--warning {
+  border-color: rgba(240, 162, 58, 0.42);
+  background: rgba(240, 162, 58, 0.1);
+}
+
+.summary-tile--error {
+  border-color: rgba(244, 33, 46, 0.38);
+  background: rgba(244, 33, 46, 0.08);
+}
+
 .section-gap {
   margin-bottom: var(--spacing-md);
 }
@@ -685,11 +792,13 @@ handleNowTime()
 
 .field-row {
   display: grid;
-  grid-template-columns: 140px minmax(0, 1fr) minmax(120px, 0.6fr);
+  grid-template-columns: minmax(120px, 0.32fr) minmax(0, 1fr) minmax(150px, 0.52fr);
   gap: var(--spacing-sm);
-  padding: 10px 12px;
+  align-items: start;
+  padding: 9px 12px;
   border-bottom: 1px solid var(--color-border);
   font-size: var(--font-size-sm);
+  line-height: 1.45;
 }
 
 .field-row:last-child {
@@ -698,15 +807,18 @@ handleNowTime()
 
 .field-label {
   color: var(--color-text-secondary);
+  font-weight: 700;
 }
 
 .field-value {
   font-family: var(--font-mono);
   word-break: break-all;
+  color: var(--color-text-primary);
 }
 
 .field-remark {
   color: var(--color-text-tertiary);
+  min-width: 0;
 }
 
 .field-tools {
@@ -731,10 +843,6 @@ handleNowTime()
   color: var(--color-text-primary);
 }
 
-:deep(.n-tabs-pane-wrapper) {
-  min-height: 0;
-}
-
 :deep(.n-card__content) {
   min-width: 0;
 }
@@ -744,6 +852,10 @@ handleNowTime()
   .workspace-grid--compact {
     grid-template-columns: 1fr;
   }
+
+  .parse-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 720px) {
@@ -752,6 +864,11 @@ handleNowTime()
   }
 
   .field-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .parse-summary {
     grid-template-columns: 1fr;
   }
 }

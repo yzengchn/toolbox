@@ -6,13 +6,19 @@
   box-sizing: border-box;
 }
 
+html {
+  background: var(--color-bg-primary);
+}
+
 body {
   font-family: var(--font-family);
   font-size: var(--font-size-base);
+  line-height: 1.55;
   color: var(--color-text-primary);
-  background-color: var(--color-bg-primary);
+  background: var(--color-bg-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color var(--transition-base), color var(--transition-base);
 }
 
 #app {
@@ -25,26 +31,282 @@ code, pre {
   font-family: var(--font-mono);
 }
 
-/* 滚动条样式 */
+a {
+  color: inherit;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* 滚动条样式 - 现代化 */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-bg-secondary);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-border);
-  border-radius: 4px;
+  background: color-mix(in srgb, var(--color-text-tertiary) 34%, transparent);
+  border: 3px solid transparent;
+  border-radius: var(--radius-pill);
+  background-clip: padding-box;
+  transition: background var(--transition-fast);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-tertiary);
+  background: color-mix(in srgb, var(--color-text-tertiary) 58%, transparent);
+  background-clip: padding-box;
 }
 
-/* Naive UI 覆盖样式 */
+/* 选中文本样式 */
+::selection {
+  background-color: var(--color-primary);
+  color: var(--color-primary-contrast);
+}
+
+::-moz-selection {
+  background-color: var(--color-primary);
+  color: var(--color-primary-contrast);
+}
+
+/* Naive UI 覆盖样式 - 工具台基线 */
+.n-card {
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: none !important;
+  transition:
+    border-color var(--transition-base),
+    background-color var(--transition-base) !important;
+}
+
 .n-card-header__main {
   font-size: var(--font-size-lg) !important;
+  font-weight: 650 !important;
+  color: var(--color-text-primary) !important;
+}
+
+.n-card-header {
+  padding: 18px 20px 12px !important;
+}
+
+.n-card__content {
+  padding: 18px 20px 20px !important;
+}
+
+.n-card.n-card--embedded {
+  background: var(--color-surface-muted) !important;
+  box-shadow: none !important;
+}
+
+.n-button {
+  border-radius: var(--radius-sm) !important;
+  font-weight: 600 !important;
+  transition:
+    border-color var(--transition-fast),
+    background-color var(--transition-fast),
+    color var(--transition-fast) !important;
+}
+
+.n-button:not(.n-button--disabled):hover {
+  transform: none;
+}
+
+.n-button--primary-type {
+  background: var(--color-primary) !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: var(--color-primary-contrast) !important;
+}
+
+.n-button--primary-type:hover {
+  background: var(--color-primary-hover) !important;
+  box-shadow: none !important;
+  color: var(--color-primary-contrast) !important;
+}
+
+.n-input,
+.n-input-number,
+.n-select,
+.n-base-selection {
+  border-radius: var(--radius-sm) !important;
+  transition:
+    border-color var(--transition-fast),
+    background-color var(--transition-fast) !important;
+}
+
+.n-input,
+.n-input .n-input-wrapper,
+.n-input .n-input__textarea {
+  background: var(--color-surface-muted) !important;
+}
+
+.n-input:focus-within {
+  box-shadow: var(--shadow-focus) !important;
+}
+
+.n-input .n-input__input-el,
+.n-input .n-input__textarea-el {
+  color: var(--color-text-primary) !important;
+}
+
+.n-input .n-input__placeholder,
+.n-base-selection-placeholder {
+  color: var(--color-text-tertiary) !important;
+}
+
+.n-alert {
+  border-radius: var(--radius-sm) !important;
+  border-left-width: 3px !important;
+  box-shadow: none !important;
+}
+
+.n-divider {
+  transition: border-color var(--transition-base) !important;
+}
+
+.n-tabs .n-tabs-nav {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 4px;
+}
+
+.n-tabs .n-tabs-tab {
+  border-radius: var(--radius-sm);
+  padding: 8px 14px !important;
+  color: var(--color-text-secondary);
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast) !important;
+}
+
+.n-tabs .n-tabs-tab:hover,
+.n-tabs .n-tabs-tab.n-tabs-tab--active {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.n-tabs .n-tabs-bar {
+  display: none !important;
+}
+
+.n-tabs .n-tab-pane {
+  padding-top: var(--spacing-lg) !important;
+}
+
+.n-form-item-label,
+.n-text {
+  color: var(--color-text-secondary) !important;
+}
+
+.n-tag {
+  border-radius: var(--radius-sm) !important;
+  font-weight: 600 !important;
+}
+
+.n-empty,
+.n-result {
+  color: var(--color-text-secondary) !important;
+}
+
+.n-scrollbar-rail {
+  right: 2px !important;
+}
+
+/* 工具卡片动画 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.tool-container {
+  animation: fadeIn var(--transition-slow) ease-out;
+}
+
+/* 渐变文字效果 */
+.gradient-text {
+  color: var(--color-primary);
+  background: none;
+  -webkit-text-fill-color: currentColor;
+}
+
+/* 玻璃态效果类 */
+.glass-effect {
+  background: var(--color-surface);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 1px solid var(--color-border);
+}
+
+.dark .glass-effect {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+/* 悬浮效果类 */
+.hover-lift {
+  transition:
+    background-color var(--transition-base),
+    border-color var(--transition-base);
+}
+
+.hover-lift:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* 脉冲动画 */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@media (max-width: 768px) {
+  #app {
+    min-width: 0;
+  }
+
+  .n-card-header {
+    padding: 16px 16px 10px !important;
+  }
+
+  .n-card__content {
+    padding: 16px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
 }
