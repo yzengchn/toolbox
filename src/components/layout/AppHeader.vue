@@ -273,7 +273,7 @@ const handleSelectTool = async (value: string) => {
 
 .logo-text {
   font-size: var(--font-size-base);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0;
 }
 
@@ -311,7 +311,7 @@ const handleSelectTool = async (value: string) => {
   border: 1px solid var(--color-border);
   text-decoration: none;
   font-size: var(--font-size-xs);
-  font-weight: 650;
+  font-weight: 600;
   line-height: 1.15;
   white-space: nowrap;
   overflow: hidden;
@@ -390,7 +390,7 @@ const handleSelectTool = async (value: string) => {
   min-width: 0;
   color: var(--color-text-primary);
   font-size: var(--font-size-sm);
-  font-weight: 650;
+  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

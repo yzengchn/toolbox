@@ -106,7 +106,7 @@ onMounted(() => {
   margin: 0 0 var(--spacing-sm);
   color: var(--color-primary);
   font-size: var(--font-size-xs);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -115,7 +115,7 @@ h1 {
   margin: 0;
   font-size: clamp(36px, 6vw, 68px);
   line-height: 0.95;
-  font-weight: 850;
+  font-weight: 700;
   color: var(--color-text-primary);
   letter-spacing: 0;
 }
@@ -149,7 +149,7 @@ h1 {
 .stat-value {
   color: var(--color-primary);
   font-size: var(--font-size-3xl);
-  font-weight: 850;
+  font-weight: 700;
   line-height: 1;
 }
 
@@ -187,7 +187,7 @@ h1 {
   margin: 0;
   color: var(--color-text-primary);
   font-size: var(--font-size-lg);
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .panel-heading span {
@@ -238,7 +238,7 @@ h1 {
   border-radius: var(--radius-sm);
   background: var(--color-primary-soft);
   color: var(--color-primary);
-  font-weight: 850;
+  font-weight: 700;
 }
 
 .category-copy,

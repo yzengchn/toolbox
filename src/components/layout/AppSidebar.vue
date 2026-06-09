@@ -144,7 +144,7 @@ const handleToolClick = () => {
   background: color-mix(in srgb, var(--color-sidebar-active) 14%, transparent);
   color: var(--color-sidebar-active);
   font-size: var(--font-size-xs);
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .tools-list {
@@ -160,7 +160,7 @@ const handleToolClick = () => {
   align-items: center;
   gap: var(--spacing-sm);
   font-size: var(--font-size-xs);
-  font-weight: 750;
+  font-weight: 600;
   color: var(--color-sidebar-muted);
   text-transform: uppercase;
   padding: var(--spacing-xs) var(--spacing-sm);
@@ -217,7 +217,7 @@ const handleToolClick = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 800;
+  font-weight: 700;
   font-size: 12px;
   border-radius: var(--radius-sm);
   border: 1px solid transparent;

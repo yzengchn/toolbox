@@ -8,6 +8,7 @@
 
 html {
   background: var(--color-bg-primary);
+  text-size-adjust: 100%;
 }
 
 body {
@@ -16,6 +17,9 @@ body {
   line-height: 1.55;
   color: var(--color-text-primary);
   background: var(--color-bg-primary);
+  font-optical-sizing: auto;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background-color var(--transition-base), color var(--transition-base);
@@ -94,7 +98,7 @@ select {
 
 .n-card-header__main {
   font-size: var(--font-size-lg) !important;
-  font-weight: 650 !important;
+  font-weight: 600 !important;
   color: var(--color-text-primary) !important;
 }
 

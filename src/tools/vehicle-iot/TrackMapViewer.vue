@@ -1195,7 +1195,7 @@ onUnmounted(() => {
 .segment-head {
   background: var(--color-surface-muted);
   color: var(--color-text-secondary);
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .segment-row {
