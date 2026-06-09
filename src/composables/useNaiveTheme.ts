@@ -3,7 +3,6 @@ import { darkTheme, type GlobalTheme, type GlobalThemeOverrides } from 'naive-ui
 import { useTheme } from './useTheme'
 
 const appFontFamily = [
-  "'Noto Sans SC'",
   '-apple-system',
   'BlinkMacSystemFont',
   "'SF Pro Text'",
@@ -12,6 +11,10 @@ const appFontFamily = [
   "'Segoe UI'",
   "'PingFang SC'",
   "'Hiragino Sans GB'",
+  "'Noto Sans CJK SC'",
+  "'Source Han Sans SC'",
+  "'HarmonyOS Sans SC'",
+  "'MiSans'",
   "'Microsoft YaHei UI'",
   "'Microsoft YaHei'",
   'sans-serif'

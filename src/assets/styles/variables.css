@@ -16,9 +16,11 @@
   --radius-pill: 999px;
 
   /* 字体 */
-  --font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'SF Pro Text',
+  --font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text',
     'Segoe UI Variable Text', 'Segoe UI Variable', 'Segoe UI', 'PingFang SC',
-    'Hiragino Sans GB', 'Microsoft YaHei UI', 'Microsoft YaHei', sans-serif;
+    'Hiragino Sans GB', 'Noto Sans CJK SC', 'Source Han Sans SC',
+    'HarmonyOS Sans SC', 'MiSans', 'Microsoft YaHei UI', 'Microsoft YaHei',
+    sans-serif;
   --font-mono: 'Cascadia Code', 'JetBrains Mono', 'SFMono-Regular', Menlo, Monaco, Consolas,
     'Liberation Mono', monospace;
   --font-size-xs: 12px;
