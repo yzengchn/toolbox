@@ -27,6 +27,9 @@
           class="bookmark-link"
           active-class="active"
           :title="tool.name"
+          @mouseenter="prefetchToolPage(tool.id)"
+          @focus="prefetchToolPage(tool.id)"
+          @pointerdown="prefetchToolPage(tool.id)"
         >
           {{ tool.name }}
         </router-link>
@@ -77,6 +80,8 @@
             :class="{ highlighted: index === highlightedSearchIndex }"
             role="option"
             :aria-selected="index === highlightedSearchIndex"
+            @mouseenter="prefetchToolPage(option.tool.id)"
+            @focus="prefetchToolPage(option.tool.id)"
             @mousedown.prevent="handleSelectTool(option.value)"
           >
             <span class="search-option__main">
@@ -138,6 +143,7 @@ import { useRouter } from 'vue-router'
 import { useTheme } from '@/composables/useTheme'
 import { useAppStore } from '@/stores/app'
 import { getToolByPath, getToolCategoryName, getToolsByIds } from '@/tools/catalog'
+import { prefetchToolPage } from '@/tools/prefetch'
 import type { ToolInfo } from '@/types'
 
 const router = useRouter()

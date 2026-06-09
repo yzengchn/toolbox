@@ -4,16 +4,30 @@
       <div class="tool-view">
         <component :is="toolComponent" v-if="toolComponent" />
 
+        <div v-else-if="tool && toolLoading" class="tool-loading" role="status" aria-live="polite">
+          <span class="tool-loading-spinner"></span>
+          <span>工具加载中...</span>
+        </div>
+
+        <div v-else-if="tool && toolLoadError" class="not-found">
+          <div class="not-found-panel" role="status">
+            <p class="not-found-title">工具加载失败</p>
+            <p class="not-found-description">{{ toolLoadError }}</p>
+            <button type="button" class="not-found-action" @click="reloadToolComponent">
+              重新加载
+            </button>
+          </div>
+        </div>
+
         <div v-if="!tool" class="not-found">
-          <n-result
-            status="404"
-            title="工具未找到"
-            description="抱歉，找不到该工具"
-          >
-            <template #footer>
-              <n-button @click="router.push('/')">返回首页</n-button>
-            </template>
-          </n-result>
+          <div class="not-found-panel" role="status">
+            <p class="not-found-code">404</p>
+            <p class="not-found-title">工具未找到</p>
+            <p class="not-found-description">抱歉，找不到该工具</p>
+            <button type="button" class="not-found-action" @click="router.push('/')">
+              返回首页
+            </button>
+          </div>
         </div>
       </div>
     </n-message-provider>
@@ -23,9 +37,10 @@
 <script setup lang="ts">
 import { computed, watch, provide, shallowRef, type Component } from 'vue'
 import { useRouter } from 'vue-router'
-import { NButton, NConfigProvider, NMessageProvider, NResult } from 'naive-ui'
+import { NConfigProvider, NMessageProvider } from 'naive-ui'
 import type { HLJSApi } from 'highlight.js'
 import { getToolById, getToolCategoryName } from '@/tools/catalog'
+import { loadToolComponent } from '@/tools/componentLoaders'
 import { useAppStore } from '@/stores/app'
 import { useNaiveTheme } from '@/composables/useNaiveTheme'
 import { getAbsoluteUrl, setSeo, siteConfig } from '@/utils/seo'
@@ -51,9 +66,17 @@ provide('isFavorite', isFavorite)
 provide('toggleFavorite', toggleFavorite)
 
 const toolComponent = shallowRef<Component | null>(null)
+const toolLoading = shallowRef(false)
+const toolLoadError = shallowRef('')
 const hljs = shallowRef<HLJSApi>()
-let componentLoadVersion = 0
 let hljsLoading: Promise<void> | null = null
+let toolLoadRequestId = 0
+const highlightToolIds = new Set([
+  'url-encoder',
+  'jt808-jt809-parser',
+  'jt1078-stream-parser',
+  'gb32960-parser'
+])
 
 const loadHighlight = () => {
   if (hljs.value) {
@@ -90,23 +113,78 @@ const loadHighlight = () => {
 watch(
   tool,
   async (newTool) => {
-    const version = ++componentLoadVersion
+    const requestId = ++toolLoadRequestId
     toolComponent.value = null
+    toolLoadError.value = ''
 
     if (!newTool) {
+      toolLoading.value = false
       return
     }
 
-    void loadHighlight()
+    toolLoading.value = true
 
-    const { getToolComponentById } = await import('@/tools')
+    if (highlightToolIds.has(newTool.id)) {
+      void loadHighlight()
+    }
 
-    if (version === componentLoadVersion) {
-      toolComponent.value = getToolComponentById(newTool.id) ?? null
+    try {
+      const component = await loadToolComponent(newTool.id)
+
+      if (requestId !== toolLoadRequestId) {
+        return
+      }
+
+      toolComponent.value = component ?? null
+      if (!component) {
+        toolLoadError.value = '没有找到该工具组件'
+      }
+    } catch (error) {
+      if (requestId !== toolLoadRequestId) {
+        return
+      }
+
+      toolLoadError.value = error instanceof Error ? error.message : '工具组件加载失败'
+      console.error('Load tool component failed:', error)
+    } finally {
+      if (requestId === toolLoadRequestId) {
+        toolLoading.value = false
+      }
     }
   },
   { immediate: true }
 )
+
+const reloadToolComponent = () => {
+  const currentTool = tool.value
+  if (!currentTool) return
+
+  const requestId = ++toolLoadRequestId
+  toolComponent.value = null
+  toolLoadError.value = ''
+  toolLoading.value = true
+
+  void loadToolComponent(currentTool.id)
+    .then((component) => {
+      if (requestId !== toolLoadRequestId) return
+
+      toolComponent.value = component ?? null
+      if (!component) {
+        toolLoadError.value = '没有找到该工具组件'
+      }
+    })
+    .catch((error) => {
+      if (requestId !== toolLoadRequestId) return
+
+      toolLoadError.value = error instanceof Error ? error.message : '工具组件加载失败'
+      console.error('Reload tool component failed:', error)
+    })
+    .finally(() => {
+      if (requestId === toolLoadRequestId) {
+        toolLoading.value = false
+      }
+    })
+}
 
 // 更新页面标题和meta描述
 watch(
@@ -184,12 +262,93 @@ watch(
   padding-top: var(--spacing-sm);
 }
 
+.tool-loading {
+  min-height: min(320px, 48vh);
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.tool-loading-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 999px;
+  animation: tool-loading-spin 0.78s linear infinite;
+}
+
+@keyframes tool-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .not-found {
   display: flex;
   align-items: center;
   justify-content: center;
   height: 100%;
   padding: var(--spacing-xl);
+}
+
+.not-found-panel {
+  width: min(100%, 360px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  text-align: center;
+}
+
+.not-found-code {
+  margin: 0;
+  color: var(--color-primary);
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.not-found-title {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.not-found-description {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.not-found-action {
+  min-height: 36px;
+  margin-top: var(--spacing-sm);
+  padding: 0 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.not-found-action:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-bg-secondary);
 }
 
 @media (max-width: 720px) {

@@ -5,7 +5,7 @@
         <p class="eyebrow">在线工具 · DevTool</p>
         <p id="home-title" class="home-title">ToolBox 在线开发者工具箱</p>
         <p class="description">
-          面向开发者的在线工具集合，覆盖 JSON 格式化、Base64 编码解码、JWT 解码、时间戳转换、IP 查询、CIDR 网段计算器、端口扫描，以及 JT808、GB32960、CAN/J1939、OCPP、VIN 等车联网工具场景。
+          面向开发者的在线工具集合，覆盖 JSON 格式化、Base64 编码解码、JWT 解码、时间戳转换、正则表达式、CIDR 网段计算器、端口扫描，以及 JT808、GB32960、CAN/J1939、OCPP、VIN 等车联网工具场景。
         </p>
       </div>
 
@@ -35,6 +35,9 @@
             :to="category.tools[0]?.path || '/'"
             class="category-card"
             :style="{ '--category-color': category.color }"
+            @mouseenter="prefetchToolPage(category.tools[0]?.id)"
+            @focus="prefetchToolPage(category.tools[0]?.id)"
+            @pointerdown="prefetchToolPage(category.tools[0]?.id)"
           >
             <span class="category-mark" aria-hidden="true"></span>
             <span class="category-copy">
@@ -57,6 +60,9 @@
             :key="tool.id"
             :to="tool.path"
             class="tool-card"
+            @mouseenter="prefetchToolPage(tool.id)"
+            @focus="prefetchToolPage(tool.id)"
+            @pointerdown="prefetchToolPage(tool.id)"
           >
             <span class="tool-icon">{{ tool.name.charAt(0) }}</span>
             <span class="tool-copy">
@@ -74,6 +80,7 @@
 import { onMounted } from 'vue'
 import type { ToolInfo } from '@/types'
 import { allTools, getToolCategoryColor, toolCategories } from '@/tools/catalog'
+import { prefetchToolPage } from '@/tools/prefetch'
 
 const populatedCategories = toolCategories
   .filter(category => category.tools.length > 0)
@@ -88,6 +95,7 @@ const featuredToolIds = [
   'timestamp-converter',
   'subnet-calculator',
   'password-generator',
+  'regex-tester',
   'geohash-tool',
   'qrcode-generator',
   'user-agent-parser'

@@ -1,6 +1,23 @@
-import { computed } from 'vue'
-import { darkTheme, type GlobalTheme, type GlobalThemeOverrides } from 'naive-ui'
+import { computed, shallowRef, watch } from 'vue'
+import type { GlobalTheme, GlobalThemeOverrides } from 'naive-ui'
 import { useTheme } from './useTheme'
+
+let darkThemeLoadPromise: Promise<GlobalTheme> | null = null
+const loadedDarkTheme = shallowRef<GlobalTheme | null>(null)
+
+const loadDarkTheme = () => {
+  if (loadedDarkTheme.value) {
+    return Promise.resolve(loadedDarkTheme.value)
+  }
+
+  darkThemeLoadPromise ??= import('naive-ui/es/themes/dark')
+    .then(({ darkTheme }) => {
+      loadedDarkTheme.value = darkTheme
+      return darkTheme
+    })
+
+  return darkThemeLoadPromise
+}
 
 const appFontFamily = [
   '-apple-system',
@@ -23,7 +40,19 @@ const appFontFamily = [
 export function useNaiveTheme() {
   const { isDark } = useTheme()
 
-  const naiveTheme = computed<GlobalTheme | null>(() => isDark.value ? darkTheme : null)
+  const naiveTheme = computed<GlobalTheme | null>(() => isDark.value ? loadedDarkTheme.value : null)
+
+  watch(
+    isDark,
+    (enabled) => {
+      if (enabled) {
+        void loadDarkTheme().catch((error) => {
+          console.error('Load Naive UI dark theme failed:', error)
+        })
+      }
+    },
+    { immediate: true }
+  )
 
   const naiveThemeOverrides = computed<GlobalThemeOverrides>(() => {
     const primaryColor = isDark.value ? '#64b5f6' : '#1d9bf0'

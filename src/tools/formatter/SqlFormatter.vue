@@ -89,7 +89,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { NCard, NInput, NInputNumber, NSelect, NCheckbox, NButton, NButtonGroup, NDivider, NSpace, NAlert, NText } from 'naive-ui'
-import { format, type SqlLanguage } from 'sql-formatter'
+import type { SqlLanguage } from 'sql-formatter'
 import ToolHeader from '@/components/ToolHeader.vue'
 import { useClipboard } from '@/composables/useClipboard'
 import { compressWhitespace, getErrorMessage } from './utils'
@@ -101,6 +101,7 @@ const error = ref('')
 const language = ref<SqlLanguage>('sql')
 const indentSize = ref(2)
 const uppercase = ref(true)
+let sqlFormatterModulePromise: Promise<typeof import('sql-formatter')> | null = null
 
 const languageOptions: Array<{ label: string, value: SqlLanguage }> = [
   { label: 'SQL (通用)', value: 'sql' },
@@ -123,12 +124,18 @@ const ensureInput = (): boolean => {
   return false
 }
 
-const handleFormat = () => {
+const loadSqlFormatter = () => {
+  sqlFormatterModulePromise ??= import('sql-formatter')
+  return sqlFormatterModulePromise
+}
+
+const handleFormat = async () => {
   resetError()
 
   if (!ensureInput()) return
 
   try {
+    const { format } = await loadSqlFormatter()
     input.value = format(input.value, {
       language: language.value,
       tabWidth: indentSize.value,

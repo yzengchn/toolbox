@@ -150,13 +150,12 @@ import {
 } from 'naive-ui'
 import { useClipboard } from '@/composables/useClipboard'
 import {
-  computeFileHash,
-  computeHash,
   formatHexDigest,
   getErrorMessage,
   HASH_ALGORITHM_OPTIONS,
   type HashAlgorithm
 } from './utils'
+import { computeFileHash, computeHash } from './hashUtils'
 import ToolHeader from '@/components/ToolHeader.vue'
 import { formatFileSize } from '@/utils/format'
 
@@ -214,14 +213,22 @@ const calculateHash = async () => {
 
   try {
     if (mode.value === 'text') {
-      isCalculating.value = false
-
       if (!textInput.value) {
         rawOutput.value = ''
+        isCalculating.value = false
         return
       }
 
-      rawOutput.value = computeHash(textInput.value, algorithm.value)
+      const text = textInput.value
+      const selectedAlgorithm = algorithm.value
+      isCalculating.value = true
+      const nextOutput = await computeHash(text, selectedAlgorithm)
+
+      if (currentCalculationId !== calculationId) {
+        return
+      }
+
+      rawOutput.value = nextOutput
       return
     }
 

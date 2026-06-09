@@ -76,6 +76,12 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://tools.neocockpit.cn/tool/regex-tester</loc>
+    <lastmod>2026-06-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://tools.neocockpit.cn/tool/uuid-generator</loc>
     <lastmod>2026-06-09</lastmod>
     <changefreq>weekly</changefreq>
@@ -193,12 +199,6 @@
   </url>
 
   <!-- 网络工具 -->
-  <url>
-    <loc>https://tools.neocockpit.cn/tool/ip-lookup</loc>
-    <lastmod>2026-06-09</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
   <url>
     <loc>https://tools.neocockpit.cn/tool/subnet-calculator</loc>
     <lastmod>2026-06-09</lastmod>

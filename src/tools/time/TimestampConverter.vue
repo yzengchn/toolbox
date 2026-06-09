@@ -118,7 +118,7 @@ import {
 } from 'naive-ui'
 import { useClipboard } from '@/composables/useClipboard'
 import { formatDate, formatDateTime, todayAt, unixSeconds } from '@/utils/demoTime'
-import { parseTimestampInput, type TimestampResult } from './utils'
+import { parseTimestampInput, type TimestampResult } from './timestampUtils'
 import ToolHeader from '@/components/ToolHeader.vue'
 
 const { copy } = useClipboard()

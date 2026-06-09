@@ -1,13 +1,11 @@
 import { defineAsyncComponent, type Component } from 'vue'
 
-const loadEncodingTools = () => import('./components')
-
-const Base64Encoder = defineAsyncComponent(() => loadEncodingTools().then(module => module.Base64Encoder))
-const Base64ImageTool = defineAsyncComponent(() => loadEncodingTools().then(module => module.Base64ImageTool))
-const ColorConverter = defineAsyncComponent(() => loadEncodingTools().then(module => module.ColorConverter))
-const JwtDecoder = defineAsyncComponent(() => loadEncodingTools().then(module => module.JwtDecoder))
-const HashCalculator = defineAsyncComponent(() => loadEncodingTools().then(module => module.HashCalculator))
-const EncryptionTool = defineAsyncComponent(() => loadEncodingTools().then(module => module.EncryptionTool))
+const Base64Encoder = defineAsyncComponent(() => import('./Base64Encoder.vue'))
+const Base64ImageTool = defineAsyncComponent(() => import('../utilities/Base64ImageTool.vue'))
+const ColorConverter = defineAsyncComponent(() => import('../utilities/ColorConverter.vue'))
+const JwtDecoder = defineAsyncComponent(() => import('./JwtDecoder.vue'))
+const HashCalculator = defineAsyncComponent(() => import('./HashCalculator.vue'))
+const EncryptionTool = defineAsyncComponent(() => import('./EncryptionTool.vue'))
 
 export const encodingToolComponents = {
   'base64-encoder': Base64Encoder,

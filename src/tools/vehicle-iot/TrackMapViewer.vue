@@ -408,6 +408,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import type { LayerGroup, Map as LeafletMap } from 'leaflet'
 import {
   NAlert,
   NButton,
@@ -427,8 +428,6 @@ import {
   NTag,
   NText
 } from 'naive-ui'
-import L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
 import ToolHeader from '@/components/ToolHeader.vue'
 import { useClipboard } from '@/composables/useClipboard'
 import { formatNmeaDate, todayAt } from '@/utils/demoTime'
@@ -453,6 +452,7 @@ import {
   type NmeaParseResult,
   type TrackPoint
 } from './utils'
+import { getLoadedLeaflet, loadLeaflet } from './leafletLoader'
 
 type FenceMode = 'circle' | 'polygon'
 
@@ -495,10 +495,11 @@ const error = ref('')
 const mapError = ref('')
 const mapContainer = ref<HTMLElement | null>(null)
 
-let map: L.Map | null = null
-let trackLayer: L.LayerGroup | null = null
-let analysisLayer: L.LayerGroup | null = null
-let fenceLayer: L.LayerGroup | null = null
+let map: LeafletMap | null = null
+let trackLayer: LayerGroup | null = null
+let analysisLayer: LayerGroup | null = null
+let fenceLayer: LayerGroup | null = null
+let mapInitPromise: Promise<void> | null = null
 
 const summary = computed(() => summarizeTrack(points.value))
 const segments = computed(() => buildTrackSegments(points.value))
@@ -540,8 +541,12 @@ const segmentRows = computed(() => {
 
 const initMap = () => {
   if (!mapContainer.value || map) return
+  if (mapInitPromise) return mapInitPromise
 
-  try {
+  mapInitPromise = (async () => {
+    const L = await loadLeaflet()
+    if (!mapContainer.value || map) return
+
     map = L.map(mapContainer.value, {
       preferCanvas: true,
       zoomControl: true
@@ -557,16 +562,22 @@ const initMap = () => {
     fenceLayer = L.layerGroup().addTo(map)
 
     map.on('click', event => {
-      const mouseEvent = event as L.LeafletMouseEvent
-      appendMapPoint(mouseEvent.latlng.lat, mouseEvent.latlng.lng)
+      appendMapPoint(event.latlng.lat, event.latlng.lng)
     })
-  } catch (err) {
-    mapError.value = `地图初始化失败: ${(err as Error).message}`
-  }
+  })()
+    .catch((err) => {
+      mapError.value = `地图初始化失败: ${(err as Error).message}`
+    })
+    .finally(() => {
+      mapInitPromise = null
+    })
+
+  return mapInitPromise
 }
 
 const updateMap = () => {
-  if (!map || !trackLayer || !analysisLayer || !fenceLayer) return
+  const L = getLoadedLeaflet()
+  if (!map || !trackLayer || !analysisLayer || !fenceLayer || !L) return
 
   const currentTrackLayer = trackLayer
   const currentAnalysisLayer = analysisLayer
@@ -597,7 +608,8 @@ const updateMap = () => {
 }
 
 const drawTrackPoints = () => {
-  if (!trackLayer) return
+  const L = getLoadedLeaflet()
+  if (!trackLayer || !L) return
   const currentTrackLayer = trackLayer
   const renderAll = points.value.length <= 80
   points.value.forEach((point, index) => {
@@ -614,7 +626,8 @@ const drawTrackPoints = () => {
 }
 
 const drawAnalysisLayers = () => {
-  if (!analysisLayer) return
+  const L = getLoadedLeaflet()
+  if (!analysisLayer || !L) return
   const currentAnalysisLayer = analysisLayer
 
   if (showCompressedLayer.value && compressedPoints.value.length > 1 && compressedPoints.value.length < points.value.length) {
@@ -671,7 +684,8 @@ const drawAnalysisLayers = () => {
 }
 
 const drawFenceLayer = () => {
-  if (!fenceLayer || !showFenceLayer.value) return
+  const L = getLoadedLeaflet()
+  if (!fenceLayer || !showFenceLayer.value || !L) return
   const currentFenceLayer = fenceLayer
 
   try {
@@ -776,7 +790,8 @@ const handleClear = () => {
 }
 
 const handleCenterMap = () => {
-  if (!map || !points.value.length) return
+  const L = getLoadedLeaflet()
+  if (!map || !points.value.length || !L) return
   if (points.value.length === 1) {
     map.setView([points.value[0].lat, points.value[0].lng], 14)
     return
@@ -971,7 +986,7 @@ watch(
 
 onMounted(() => {
   setTimeout(async () => {
-    initMap()
+    await initMap()
     await loadTrackDemo()
   }, 100)
 })

@@ -187,7 +187,7 @@
               </div>
 
               <div class="action-row">
-                <n-button type="primary" @click="handleSymmetricRun">
+                <n-button type="primary" :loading="symmetricBusy" @click="handleSymmetricRun">
                   {{ symmetricActionLabel }}
                 </n-button>
                 <n-button :disabled="!symmetricOutput" @click="swapSymmetric">
@@ -250,7 +250,7 @@
                 <section class="panel editor-panel">
                   <div class="panel-head">
                     <h3>{{ hashAlgorithm }} 结果</h3>
-                    <n-button text :disabled="!hashOutput" @click="copy(hashOutput)">
+                    <n-button text :loading="hashBusy" :disabled="!hashOutput" @click="copy(hashOutput)">
                       复制
                     </n-button>
                   </div>
@@ -264,7 +264,10 @@
                 </section>
               </div>
 
-              <n-alert type="warning" :bordered="false" class="status-panel">
+              <n-alert v-if="hashError" type="error" class="status-panel">
+                {{ hashError }}
+              </n-alert>
+              <n-alert v-else type="warning" :bordered="false" class="status-panel">
                 MD5/SHA 是不可逆摘要，不能解密；校验时需要重新计算摘要后比对。
               </n-alert>
             </div>
@@ -326,7 +329,7 @@
                 <section class="panel editor-panel">
                   <div class="panel-head">
                     <h3>HMAC 结果</h3>
-                    <n-button text :disabled="!hmacOutput" @click="copy(hmacOutput)">
+                    <n-button text :loading="hmacBusy" :disabled="!hmacOutput" @click="copy(hmacOutput)">
                       复制
                     </n-button>
                   </div>
@@ -339,6 +342,10 @@
                   />
                 </section>
               </div>
+
+              <n-alert v-if="hmacError" type="error" class="status-panel">
+                {{ hmacError }}
+              </n-alert>
             </div>
           </n-tab-pane>
       </PageTabs>
@@ -348,7 +355,6 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import CryptoJS from 'crypto-js'
 import {
   NAlert,
   NButton,
@@ -366,22 +372,17 @@ import { useClipboard } from '@/composables/useClipboard'
 import {
   base64ToBytes,
   bytesToBase64,
-  computeHash,
-  computeHmac,
   formatHexDigest,
   getErrorMessage,
   HASH_ALGORITHM_OPTIONS,
   type HashAlgorithm
 } from './utils'
+import { loadCryptoJs, type CryptoCipher, type CryptoJsRuntime } from './cryptoJsLoader'
+import { computeHash, computeHmac } from './hashUtils'
 
 type CryptoTab = 'rsa' | 'symmetric' | 'hash' | 'hmac'
 type CryptoMode = 'encrypt' | 'decrypt'
 type SymmetricAlgorithm = 'AES' | 'DES' | 'TripleDES'
-
-type SymmetricCipher = {
-  encrypt: (message: string, secret: string) => CryptoJS.lib.CipherParams
-  decrypt: (ciphertext: string, secret: string) => CryptoJS.lib.WordArray
-}
 
 const { copy } = useClipboard()
 
@@ -407,15 +408,25 @@ const symmetricInput = ref('')
 const symmetricOutput = ref('')
 const symmetricError = ref('')
 const symmetricNotice = ref('')
+const symmetricBusy = ref(false)
+let symmetricRunId = 0
 
 const hashAlgorithm = ref<HashAlgorithm>('MD5')
 const hashUppercase = ref(false)
 const hashInput = ref('')
+const hashRawOutput = ref('')
+const hashError = ref('')
+const hashBusy = ref(false)
+let hashCalculationId = 0
 
 const hmacAlgorithm = ref<HashAlgorithm>('SHA256')
 const hmacUppercase = ref(false)
 const hmacSecret = ref('')
 const hmacInput = ref('')
+const hmacRawOutput = ref('')
+const hmacError = ref('')
+const hmacBusy = ref(false)
+let hmacCalculationId = 0
 
 const rsaKeySizeOptions = [
   { label: '2048 bit', value: 2048 },
@@ -431,10 +442,14 @@ const symmetricAlgorithmOptions: Array<{ label: string, value: SymmetricAlgorith
 
 const hashAlgorithmOptions = HASH_ALGORITHM_OPTIONS
 
-const symmetricCiphers: Record<SymmetricAlgorithm, SymmetricCipher> = {
-  AES: CryptoJS.AES,
-  DES: CryptoJS.DES,
-  TripleDES: CryptoJS.TripleDES
+const getSymmetricCipher = (cryptoJs: CryptoJsRuntime, algorithm: SymmetricAlgorithm): CryptoCipher => {
+  const ciphers: Record<SymmetricAlgorithm, CryptoCipher> = {
+    AES: cryptoJs.AES,
+    DES: cryptoJs.DES,
+    TripleDES: cryptoJs.TripleDES
+  }
+
+  return ciphers[algorithm]
 }
 
 const rsaInputTitle = computed(() => (rsaMode.value === 'encrypt' ? '明文' : '密文 Base64'))
@@ -463,19 +478,19 @@ const symmetricAlgorithmLabel = computed(() => (
 ))
 
 const hashOutput = computed(() => {
-  if (!hashInput.value) {
+  if (!hashRawOutput.value) {
     return ''
   }
 
-  return formatHexDigest(computeHash(hashInput.value, hashAlgorithm.value), hashUppercase.value)
+  return formatHexDigest(hashRawOutput.value, hashUppercase.value)
 })
 
 const hmacOutput = computed(() => {
-  if (!hmacInput.value || !hmacSecret.value) {
+  if (!hmacRawOutput.value) {
     return ''
   }
 
-  return formatHexDigest(computeHmac(hmacInput.value, hmacSecret.value, hmacAlgorithm.value), hmacUppercase.value)
+  return formatHexDigest(hmacRawOutput.value, hmacUppercase.value)
 })
 
 const getSubtleCrypto = () => {
@@ -624,38 +639,59 @@ const clearRsa = () => {
   rsaNotice.value = ''
 }
 
-const handleSymmetricRun = () => {
+const handleSymmetricRun = async () => {
+  const runId = ++symmetricRunId
+  symmetricBusy.value = true
   symmetricError.value = ''
   symmetricNotice.value = ''
 
   try {
-    if (!symmetricInput.value.trim()) {
-      throw new Error(symmetricMode.value === 'encrypt' ? '请输入明文' : '请输入密文')
+    const mode = symmetricMode.value
+    const algorithm = symmetricAlgorithm.value
+    const algorithmLabel = symmetricAlgorithmLabel.value
+    const input = symmetricInput.value
+    const secret = symmetricSecret.value
+
+    if (!input.trim()) {
+      throw new Error(mode === 'encrypt' ? '请输入明文' : '请输入密文')
     }
 
-    if (!symmetricSecret.value) {
+    if (!secret) {
       throw new Error('请输入密钥或口令')
     }
 
-    const cipher = symmetricCiphers[symmetricAlgorithm.value]
+    const cryptoJs = await loadCryptoJs()
+    const cipher = getSymmetricCipher(cryptoJs, algorithm)
 
-    if (symmetricMode.value === 'encrypt') {
-      symmetricOutput.value = cipher.encrypt(symmetricInput.value, symmetricSecret.value).toString()
-      symmetricNotice.value = `${symmetricAlgorithmLabel.value} 加密完成`
+    if (runId !== symmetricRunId) {
       return
     }
 
-    const decrypted = cipher.decrypt(symmetricInput.value.trim(), symmetricSecret.value).toString(CryptoJS.enc.Utf8)
+    if (mode === 'encrypt') {
+      symmetricOutput.value = cipher.encrypt(input, secret).toString()
+      symmetricNotice.value = `${algorithmLabel} 加密完成`
+      return
+    }
+
+    const decrypted = cipher.decrypt(input.trim(), secret).toString(cryptoJs.enc.Utf8)
 
     if (!decrypted) {
       throw new Error('解密失败，请检查算法、密钥和密文')
     }
 
     symmetricOutput.value = decrypted
-    symmetricNotice.value = `${symmetricAlgorithmLabel.value} 解密完成`
+    symmetricNotice.value = `${algorithmLabel} 解密完成`
   } catch (error) {
+    if (runId !== symmetricRunId) {
+      return
+    }
+
     symmetricOutput.value = ''
     symmetricError.value = getErrorMessage(error, '加解密失败')
+  } finally {
+    if (runId === symmetricRunId) {
+      symmetricBusy.value = false
+    }
   }
 }
 
@@ -670,20 +706,105 @@ const swapSymmetric = () => {
 }
 
 const clearSymmetric = () => {
+  symmetricRunId += 1
   symmetricSecret.value = ''
   symmetricInput.value = ''
   symmetricOutput.value = ''
   symmetricError.value = ''
   symmetricNotice.value = ''
+  symmetricBusy.value = false
+}
+
+const calculateHashDigest = async () => {
+  const calculationId = ++hashCalculationId
+  const input = hashInput.value
+  const algorithm = hashAlgorithm.value
+
+  hashError.value = ''
+
+  if (!input.trim()) {
+    hashRawOutput.value = ''
+    hashBusy.value = false
+    return
+  }
+
+  hashBusy.value = true
+
+  try {
+    const output = await computeHash(input, algorithm)
+
+    if (calculationId !== hashCalculationId) {
+      return
+    }
+
+    hashRawOutput.value = output
+  } catch (error) {
+    if (calculationId !== hashCalculationId) {
+      return
+    }
+
+    hashRawOutput.value = ''
+    hashError.value = getErrorMessage(error, '摘要计算失败')
+  } finally {
+    if (calculationId === hashCalculationId) {
+      hashBusy.value = false
+    }
+  }
+}
+
+const calculateHmacDigest = async () => {
+  const calculationId = ++hmacCalculationId
+  const input = hmacInput.value
+  const secret = hmacSecret.value
+  const algorithm = hmacAlgorithm.value
+
+  hmacError.value = ''
+
+  if (!input.trim() || !secret) {
+    hmacRawOutput.value = ''
+    hmacBusy.value = false
+    return
+  }
+
+  hmacBusy.value = true
+
+  try {
+    const output = await computeHmac(input, secret, algorithm)
+
+    if (calculationId !== hmacCalculationId) {
+      return
+    }
+
+    hmacRawOutput.value = output
+  } catch (error) {
+    if (calculationId !== hmacCalculationId) {
+      return
+    }
+
+    hmacRawOutput.value = ''
+    hmacError.value = getErrorMessage(error, 'HMAC 计算失败')
+  } finally {
+    if (calculationId === hmacCalculationId) {
+      hmacBusy.value = false
+    }
+  }
 }
 
 const clearHash = () => {
+  hashCalculationId += 1
   hashInput.value = ''
+  hashRawOutput.value = ''
+  hashError.value = ''
+  hashBusy.value = false
 }
 
 const clearHmac = () => {
+  hmacCalculationId += 1
   hmacSecret.value = ''
   hmacInput.value = ''
+  hmacRawOutput.value = ''
+  hmacError.value = ''
+  hmacBusy.value = false
 }
 
 watch(rsaMode, () => {
@@ -693,9 +814,19 @@ watch(rsaMode, () => {
 })
 
 watch([symmetricMode, symmetricAlgorithm, symmetricSecret], () => {
+  symmetricRunId += 1
   symmetricOutput.value = ''
   symmetricError.value = ''
   symmetricNotice.value = ''
+  symmetricBusy.value = false
+})
+
+watch([hashInput, hashAlgorithm], () => {
+  void calculateHashDigest()
+})
+
+watch([hmacInput, hmacSecret, hmacAlgorithm], () => {
+  void calculateHmacDigest()
 })
 </script>
 

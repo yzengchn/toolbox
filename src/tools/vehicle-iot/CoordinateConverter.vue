@@ -120,6 +120,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
+import type { LatLngExpression, LayerGroup, LeafletMouseEvent, Map as LeafletMap } from 'leaflet'
 import {
   NAlert,
   NButton,
@@ -131,8 +132,6 @@ import {
   NTag,
   NText
 } from 'naive-ui'
-import * as L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
 import ToolHeader from '@/components/ToolHeader.vue'
 import { useClipboard } from '@/composables/useClipboard'
 import {
@@ -143,6 +142,7 @@ import {
   type Coordinate,
   type CoordinateSystem
 } from './utils'
+import { getLoadedLeaflet, loadLeaflet } from './leafletLoader'
 
 const { copy } = useClipboard()
 
@@ -173,8 +173,9 @@ const coordinateInput = ref('39.904989,116.405285')
 const inputCoordinate = ref<Coordinate>({ lat: 39.904989, lng: 116.405285 })
 const coordinateError = ref('')
 const mapError = ref('')
-let mapInstance: L.Map | null = null
-let markerLayer: L.LayerGroup | null = null
+let mapInstance: LeafletMap | null = null
+let markerLayer: LayerGroup | null = null
+let mapInitPromise: Promise<void> | null = null
 
 const systemColors: Record<CoordinateSystem, { stroke: string; fill: string }> = {
   wgs84: { stroke: '#0f7a6b', fill: '#19a98d' },
@@ -224,8 +225,12 @@ const applyInputCoordinate = () => {
 
 const initMap = () => {
   if (!mapContainer.value || mapInstance) return
+  if (mapInitPromise) return mapInitPromise
 
-  try {
+  mapInitPromise = (async () => {
+    const L = await loadLeaflet()
+    if (!mapContainer.value || mapInstance) return
+
     const center = convertedCoordinates.value.wgs84
     const map = L.map(mapContainer.value).setView([center.lat, center.lng], 13)
 
@@ -235,7 +240,7 @@ const initMap = () => {
     }).addTo(map)
     markerLayer = L.layerGroup().addTo(map)
 
-    map.on('click', (event: L.LeafletMouseEvent) => {
+    map.on('click', (event: LeafletMouseEvent) => {
       const coordinate = roundCoordinate({
         lat: event.latlng.lat,
         lng: event.latlng.lng
@@ -251,17 +256,24 @@ const initMap = () => {
     updateMapMarker()
     requestAnimationFrame(() => map.invalidateSize())
     setTimeout(() => map.invalidateSize(), 250)
-  } catch (err) {
-    mapError.value = `地图初始化失败: ${(err as Error).message}`
-  }
+  })()
+    .catch((err) => {
+      mapError.value = `地图初始化失败: ${(err as Error).message}`
+    })
+    .finally(() => {
+      mapInitPromise = null
+    })
+
+  return mapInitPromise
 }
 
 const updateMapMarker = () => {
-  if (!mapInstance || !markerLayer) return
+  const L = getLoadedLeaflet()
+  if (!mapInstance || !markerLayer || !L) return
 
   const map = mapInstance
   const currentLayer = markerLayer
-  const latLngs: L.LatLngExpression[] = conversionCards.value.map(item => [
+  const latLngs: LatLngExpression[] = conversionCards.value.map(item => [
     item.coordinate.lat,
     item.coordinate.lng
   ])
@@ -355,7 +367,7 @@ const copyCoordinate = (value: string) => {
 }
 
 onMounted(() => {
-  initMap()
+  void initMap()
 })
 
 onUnmounted(() => {

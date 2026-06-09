@@ -18,11 +18,18 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted } from 'vue'
 import { useAppStore } from '@/stores/app'
+import { prefetchLikelyToolPages, warmToolPageShell } from '@/tools/prefetch'
 import AppHeader from './AppHeader.vue'
 import AppSidebar from './AppSidebar.vue'
 import AppContent from './AppContent.vue'
 
 const appStore = useAppStore()
+const defaultWarmToolIds = [
+  'json-formatter',
+  'base64-encoder',
+  'subnet-calculator',
+  'timestamp-converter'
+]
 
 const mobileQuery = window.matchMedia('(max-width: 860px)')
 
@@ -38,9 +45,34 @@ const closeSidebar = () => {
   }
 }
 
+const warmToolPageAfterIdle = () => {
+  const warmLikelyTools = () => {
+    prefetchLikelyToolPages([
+      ...appStore.recentTools,
+      ...appStore.favorites,
+      ...appStore.searchHistory,
+      ...defaultWarmToolIds
+    ])
+  }
+
+  if (typeof window.requestIdleCallback === 'function') {
+    window.requestIdleCallback(() => {
+      warmToolPageShell()
+      warmLikelyTools()
+    }, { timeout: 2500 })
+    return
+  }
+
+  window.setTimeout(() => {
+    warmToolPageShell()
+    warmLikelyTools()
+  }, 800)
+}
+
 onMounted(() => {
   syncSidebarForViewport()
   mobileQuery.addEventListener('change', syncSidebarForViewport)
+  warmToolPageAfterIdle()
 })
 
 onBeforeUnmount(() => {

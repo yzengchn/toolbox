@@ -56,15 +56,6 @@ export const allTools: ToolInfo[] = [
     path: '/tool/hash-calculator'
   },
   {
-    id: 'ip-lookup',
-    name: 'IP 地址查询',
-    description: '查询 IP 地址的地理位置和网络信息',
-    icon: 'mdi:ip-network',
-    category: 'network',
-    keywords: ['ip', 'lookup', '查询', '地址', '地理位置'],
-    path: '/tool/ip-lookup'
-  },
-  {
     id: 'subnet-calculator',
     name: 'CIDR 网段计算器',
     description: '计算 IPv4 CIDR 网段的网络地址、广播地址、可用主机数等信息',
@@ -117,6 +108,15 @@ export const allTools: ToolInfo[] = [
     category: 'utilities',
     keywords: ['password', 'generator', '密码', '生成器', '随机', '安全'],
     path: '/tool/password-generator'
+  },
+  {
+    id: 'regex-tester',
+    name: '正则表达式',
+    description: '测试 JavaScript 正则表达式，查看匹配分组并执行文本替换',
+    icon: 'mdi:regex',
+    category: 'utilities',
+    keywords: ['regex', 'regexp', 'regular expression', '正则', '正则表达式', '匹配', '分组', '替换', '测试', '中文字符', '空白行', 'Email', 'URL', '电话号码', 'QQ号', '邮政编码', '身份证号', '日期'],
+    path: '/tool/regex-tester'
   },
   {
     id: 'uuid-generator',

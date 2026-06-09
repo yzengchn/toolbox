@@ -24,6 +24,9 @@
                 class="tool-item"
                 active-class="active"
                 :title="tool.name"
+                @mouseenter="prefetchToolPage(tool.id)"
+                @focus="prefetchToolPage(tool.id)"
+                @pointerdown="prefetchToolPage(tool.id)"
                 @click="handleToolClick"
               >
                 <span class="tool-icon">{{ tool.name.charAt(0) }}</span>
@@ -45,6 +48,7 @@
 <script setup lang="ts">
 import { useAppStore } from '@/stores/app'
 import { toolCategories, allTools, getToolCategoryColor } from '@/tools/catalog'
+import { prefetchToolPage } from '@/tools/prefetch'
 
 const appStore = useAppStore()
 

@@ -95,7 +95,6 @@
 <script setup lang="ts">
 import { ref, reactive, watch } from 'vue'
 import { NCard, NInput, NSlider, NRadioGroup, NRadio, NButton, NSpace, NAlert, NText, NGrid, NGridItem, NEmpty, useMessage } from 'naive-ui'
-import QRCode from 'qrcode'
 import ToolHeader from '@/components/ToolHeader.vue'
 import { debounce } from '@/utils/debounce'
 
@@ -114,6 +113,13 @@ const options = reactive({
   }
 })
 
+let qrCodeModulePromise: Promise<typeof import('qrcode')> | null = null
+
+const loadQrCode = () => {
+  qrCodeModulePromise ??= import('qrcode')
+  return qrCodeModulePromise
+}
+
 const handleGenerate = async () => {
   if (!content.value.trim()) {
     qrCodeUrl.value = ''
@@ -123,6 +129,7 @@ const handleGenerate = async () => {
 
   error.value = ''
   try {
+    const QRCode = await loadQrCode()
     qrCodeUrl.value = await QRCode.toDataURL(content.value, {
       width: options.width,
       errorCorrectionLevel: options.errorCorrectionLevel,

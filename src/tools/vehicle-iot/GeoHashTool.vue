@@ -117,6 +117,7 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue'
+import type { CircleMarker, LeafletMouseEvent, Map as LeafletMap } from 'leaflet'
 import {
   NAlert,
   NButton,
@@ -128,12 +129,11 @@ import {
   NSpace,
   NText
 } from 'naive-ui'
-import * as L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
 import * as geohash from 'ngeohash'
 import ToolHeader from '@/components/ToolHeader.vue'
 import { useClipboard } from '@/composables/useClipboard'
 import { formatCoordinate, parseCoordinateLine, roundCoordinate } from './utils'
+import { getLoadedLeaflet, loadLeaflet } from './leafletLoader'
 
 const { copy } = useClipboard()
 
@@ -148,8 +148,9 @@ const geohashResult = ref('')
 const geohashDecode = ref('')
 const geohashDecodeResult = ref<{ latitude: number; longitude: number } | null>(null)
 const mapError = ref('')
-let mapInstance: L.Map | null = null
-let mapMarker: L.CircleMarker | null = null
+let mapInstance: LeafletMap | null = null
+let mapMarker: CircleMarker | null = null
+let mapInitPromise: Promise<void> | null = null
 
 const mapCoordinateText = computed(() => {
   if (!geohashResult.value) return '-'
@@ -191,8 +192,12 @@ const handleCoordinateInputChange = () => {
 
 const initMap = () => {
   if (!mapContainer.value || mapInstance) return
+  if (mapInitPromise) return mapInitPromise
 
-  try {
+  mapInitPromise = (async () => {
+    const L = await loadLeaflet()
+    if (!mapContainer.value || mapInstance) return
+
     // 初始化地图
     mapInstance = L.map(mapContainer.value).setView([mapLat.value, mapLng.value], 13)
 
@@ -208,7 +213,7 @@ const initMap = () => {
     setTimeout(() => mapInstance?.invalidateSize(), 250)
 
     // 监听地图点击事件
-    mapInstance.on('click', (e: L.LeafletMouseEvent) => {
+    mapInstance.on('click', (e: LeafletMouseEvent) => {
       const coordinate = roundCoordinate({ lat: e.latlng.lat, lng: e.latlng.lng })
       mapLat.value = coordinate.lat
       mapLng.value = coordinate.lng
@@ -216,13 +221,20 @@ const initMap = () => {
       coordinateError.value = ''
       handleCoordinateUpdate()
     })
-  } catch (err) {
-    mapError.value = '地图初始化失败: ' + (err as Error).message
-  }
+  })()
+    .catch((err) => {
+      mapError.value = '地图初始化失败: ' + (err as Error).message
+    })
+    .finally(() => {
+      mapInitPromise = null
+    })
+
+  return mapInitPromise
 }
 
 const updateMapMarker = () => {
-  if (!mapInstance) return
+  const L = getLoadedLeaflet()
+  if (!mapInstance || !L) return
 
   // 移除旧标记
   if (mapMarker) {
@@ -254,7 +266,7 @@ const handleCoordinateUpdate = () => {
     } else {
       // 如果地图还未初始化，延迟初始化
       setTimeout(() => {
-        initMap()
+        void initMap()
       }, 100)
     }
   }

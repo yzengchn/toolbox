@@ -104,7 +104,7 @@ import {
   NSpace
 } from 'naive-ui'
 import { useClipboard } from '@/composables/useClipboard'
-import { parseCronExpression, type CronParseResult } from './utils'
+import { parseCronExpression, type CronParseResult } from './cronUtils'
 import ToolHeader from '@/components/ToolHeader.vue'
 
 const { copy } = useClipboard()

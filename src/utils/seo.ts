@@ -6,7 +6,7 @@ export const siteConfig = {
   name: 'ToolBox',
   title: 'ToolBox 在线工具 - 开发者工具箱 DevTool',
   description:
-    'ToolBox 是面向开发者的在线工具箱，提供 JSON、SQL、XML 格式化，Base64、JWT、Hash、URL 编码解码，时间戳转换、IP 查询、CIDR 网段计算器、端口扫描、车联网报文解析、CAN/J1939 解码、OCPP 报文校验、VIN 解析等 DevTool 工具。',
+    'ToolBox 是面向开发者的在线工具箱，提供 JSON、SQL、XML 格式化，Base64、JWT、Hash、URL 编码解码，时间戳转换、正则表达式、CIDR 网段计算器、端口扫描、车联网报文解析、CAN/J1939 解码、OCPP 报文校验、VIN 解析等 DevTool 工具。',
   keywords: [
     '在线工具',
     '开发者工具',
@@ -22,7 +22,10 @@ export const siteConfig = {
     'Hash计算',
     'URL编码',
     '时间戳转换',
-    'IP查询',
+    '正则表达式',
+    '正则测试',
+    'Regex测试',
+    '正则匹配',
     'CIDR 网段计算器',
     'CIDR计算器',
     '子网计算器',

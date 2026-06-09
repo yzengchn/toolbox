@@ -1,22 +1,20 @@
 import { defineAsyncComponent, type Component } from 'vue'
 
-const loadVehicleIotTools = () => import('./components')
-
-const Jt808Jt809Parser = defineAsyncComponent(() => loadVehicleIotTools().then(module => module.Jt808Jt809Parser))
-const GeoHashTool = defineAsyncComponent(() => loadVehicleIotTools().then(module => module.GeoHashTool))
-const CoordinateConverter = defineAsyncComponent(() => loadVehicleIotTools().then(module => module.CoordinateConverter))
-const TrackMapViewer = defineAsyncComponent(() => loadVehicleIotTools().then(module => module.TrackMapViewer))
-const Gb32960Parser = defineAsyncComponent(() => loadVehicleIotTools().then(module => module.Gb32960Parser))
-const CanJ1939Decoder = defineAsyncComponent(() => loadVehicleIotTools().then(module => module.CanJ1939Decoder))
-const J1939IdCalculator = defineAsyncComponent(() => loadVehicleIotTools().then(module => module.J1939IdCalculator))
-const Jt1078StreamParser = defineAsyncComponent(() => loadVehicleIotTools().then(module => module.Jt1078StreamParser))
-const VehicleMessageBuilder = defineAsyncComponent(() => loadVehicleIotTools().then(module => module.VehicleMessageBuilder))
-const VinDecoder = defineAsyncComponent(() => loadVehicleIotTools().then(module => module.VinDecoder))
-const CanSignalChartAnalyzer = defineAsyncComponent(() => loadVehicleIotTools().then(module => module.CanSignalChartAnalyzer))
-const ObdUdsDiagnostic = defineAsyncComponent(() => loadVehicleIotTools().then(module => module.ObdUdsDiagnostic))
-const Gbt27930Parser = defineAsyncComponent(() => loadVehicleIotTools().then(module => module.Gbt27930Parser))
-const OcppMessageTool = defineAsyncComponent(() => loadVehicleIotTools().then(module => module.OcppMessageTool))
-const VehicleLogTimelineTool = defineAsyncComponent(() => loadVehicleIotTools().then(module => module.VehicleLogTimelineTool))
+const Jt808Jt809Parser = defineAsyncComponent(() => import('./Jt808Jt809Parser.vue'))
+const GeoHashTool = defineAsyncComponent(() => import('./GeoHashTool.vue'))
+const CoordinateConverter = defineAsyncComponent(() => import('./CoordinateConverter.vue'))
+const TrackMapViewer = defineAsyncComponent(() => import('./TrackMapViewer.vue'))
+const Gb32960Parser = defineAsyncComponent(() => import('./Gb32960Parser.vue'))
+const CanJ1939Decoder = defineAsyncComponent(() => import('./CanJ1939Decoder.vue'))
+const J1939IdCalculator = defineAsyncComponent(() => import('./J1939IdCalculator.vue'))
+const Jt1078StreamParser = defineAsyncComponent(() => import('./Jt1078StreamParser.vue'))
+const VehicleMessageBuilder = defineAsyncComponent(() => import('./VehicleMessageBuilder.vue'))
+const VinDecoder = defineAsyncComponent(() => import('./VinDecoder.vue'))
+const CanSignalChartAnalyzer = defineAsyncComponent(() => import('./CanSignalChartAnalyzer.vue'))
+const ObdUdsDiagnostic = defineAsyncComponent(() => import('./ObdUdsDiagnostic.vue'))
+const Gbt27930Parser = defineAsyncComponent(() => import('./Gbt27930Parser.vue'))
+const OcppMessageTool = defineAsyncComponent(() => import('./OcppMessageTool.vue'))
+const VehicleLogTimelineTool = defineAsyncComponent(() => import('./VehicleLogTimelineTool.vue'))
 
 export const vehicleIotToolComponents = {
   'jt808-jt809-parser': Jt808Jt809Parser,
