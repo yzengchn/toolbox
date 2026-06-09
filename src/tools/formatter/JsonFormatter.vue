@@ -1,5 +1,5 @@
 <template>
-  <div class="tool-container">
+  <div class="tool-container" :class="{ 'tool-container--long-output': hasLongOutput }">
     <ToolHeader
       title="JSON 格式化"
       description="格式化、压缩和验证 JSON 数据"
@@ -68,22 +68,78 @@
                 </div>
               </n-space>
             </div>
+
+            <n-alert v-if="error" type="error" class="feedback-alert">
+              {{ error }}
+            </n-alert>
+
+            <n-alert v-else-if="valid" type="success" class="feedback-alert">
+              JSON 格式正确
+            </n-alert>
           </div>
         </n-card>
 
-        <n-card title="输出" class="editor-panel output-panel">
+        <n-card
+          title="输出"
+          class="editor-panel output-panel"
+          :class="{ 'output-panel--full-height': hasLongOutput }"
+        >
+          <template #header-extra>
+            <div v-if="output" class="output-actions">
+              <n-button-group v-if="parsedOutput" size="small">
+                <n-button
+                  size="small"
+                  :type="outputDisplayMode === 'tree' ? 'primary' : 'default'"
+                  secondary
+                  @click="outputDisplayMode = 'tree'"
+                >
+                  树形
+                </n-button>
+                <n-button
+                  size="small"
+                  :type="outputDisplayMode === 'text' ? 'primary' : 'default'"
+                  secondary
+                  @click="outputDisplayMode = 'text'"
+                >
+                  文本
+                </n-button>
+              </n-button-group>
+
+              <template v-if="hasCollapsibleJsonOutput && outputDisplayMode === 'tree'">
+                <n-button size="small" quaternary @click="handleCollapseOutputTree">
+                  全部折叠
+                </n-button>
+                <n-button size="small" quaternary @click="handleExpandOutputTree">
+                  全部展开
+                </n-button>
+              </template>
+              <n-button
+                size="small"
+                secondary
+                class="copy-button"
+                @click="handleCopyOutput"
+              >
+                复制
+              </n-button>
+            </div>
+          </template>
+
           <div class="output-input-wrap">
-            <n-button
-              v-if="output"
-              text
-              size="small"
-              class="copy-button"
-              @click="handleCopyOutput"
+            <div
+              v-if="parsedOutput && outputDisplayMode === 'tree'"
+              class="json-tree-viewer"
+              role="tree"
+              aria-label="JSON 输出"
             >
-              复制
-            </n-button>
+              <JsonTreeNode
+                :value="parsedOutput.value"
+                :collapse-mode="treeCollapseMode"
+                :collapse-signal="treeCollapseSignal"
+              />
+            </div>
 
             <n-input
+              v-else
               v-model:value="output"
               type="textarea"
               placeholder="结果将实时显示在这里"
@@ -95,23 +151,18 @@
         </n-card>
       </div>
 
-      <n-alert v-if="error" type="error" style="margin-top: 16px">
-        {{ error }}
-      </n-alert>
-
-      <n-alert v-if="valid" type="success" style="margin-top: 16px">
-        JSON 格式正确
-      </n-alert>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { NCard, NInput, NInputNumber, NCheckbox, NButton, NButtonGroup, NDivider, NSpace, NAlert, NText } from 'naive-ui'
 import ToolHeader from '@/components/ToolHeader.vue'
+import JsonTreeNode from './JsonTreeNode.vue'
 import { useClipboard } from '@/composables/useClipboard'
 import { debounce } from '@/utils/debounce'
+import type { JsonValue } from './utils'
 import {
   compressJson,
   escapeJsonString,
@@ -121,6 +172,13 @@ import {
   unescapeJsonString
 } from './utils'
 
+type OutputDisplayMode = 'tree' | 'text'
+type TreeCollapseMode = 'expanded' | 'collapsed'
+
+interface ParsedOutput {
+  value: JsonValue
+}
+
 const { copy } = useClipboard()
 
 const input = ref('')
@@ -129,6 +187,41 @@ const error = ref('')
 const valid = ref(false)
 const indentSize = ref(4)
 const sortKeys = ref(false)
+const longOutputLineLimit = 24
+const longOutputCharacterLimit = 1600
+const outputDisplayMode = ref<OutputDisplayMode>('tree')
+const treeCollapseMode = ref<TreeCollapseMode>('expanded')
+const treeCollapseSignal = ref(0)
+
+const hasLongOutput = computed(() => {
+  const value = output.value
+
+  if (!value) return false
+
+  return value.length > longOutputCharacterLimit || value.split('\n').length > longOutputLineLimit
+})
+
+const parsedOutput = computed<ParsedOutput | null>(() => {
+  const value = output.value.trim()
+
+  if (!value) return null
+
+  try {
+    return { value: parseJsonValue(value) }
+  } catch {
+    return null
+  }
+})
+
+const hasCollapsibleJsonOutput = computed(() => {
+  const parsed = parsedOutput.value
+
+  if (!parsed || parsed.value === null || typeof parsed.value !== 'object') {
+    return false
+  }
+
+  return Array.isArray(parsed.value) ? parsed.value.length > 0 : Object.keys(parsed.value).length > 0
+})
 
 const resetFeedback = () => {
   error.value = ''
@@ -155,6 +248,7 @@ const handleInput = () => {
       indentSize: indentSize.value,
       sortKeys: sortKeys.value
     })
+    outputDisplayMode.value = 'tree'
   } catch {
     // 实时预览时不显示错误，只在用户点击验证时显示
     output.value = ''
@@ -174,6 +268,7 @@ const handleFormat = () => {
       indentSize: indentSize.value,
       sortKeys: sortKeys.value
     })
+    outputDisplayMode.value = 'tree'
   } catch (err) {
     error.value = `JSON 格式错误: ${getErrorMessage(err, '未知错误')}`
   }
@@ -186,6 +281,7 @@ const handleCompress = () => {
 
   try {
     output.value = compressJson(input.value)
+    outputDisplayMode.value = 'text'
   } catch (err) {
     error.value = `JSON 格式错误: ${getErrorMessage(err, '未知错误')}`
   }
@@ -210,6 +306,7 @@ const handleEscape = () => {
   if (!ensureInput('请输入数据')) return
 
   output.value = escapeJsonString(input.value)
+  outputDisplayMode.value = 'text'
 }
 
 const handleUnescape = () => {
@@ -219,6 +316,7 @@ const handleUnescape = () => {
 
   try {
     output.value = unescapeJsonString(input.value)
+    outputDisplayMode.value = 'text'
   } catch (err) {
     error.value = `反转义失败: ${getErrorMessage(err, '未知错误')}`
   }
@@ -227,12 +325,30 @@ const handleUnescape = () => {
 const handleClear = () => {
   input.value = ''
   output.value = ''
+  outputDisplayMode.value = 'tree'
   resetFeedback()
 }
 
 const handleCopyOutput = () => {
   copy(output.value)
 }
+
+const syncOutputTreeCollapse = (mode: TreeCollapseMode) => {
+  treeCollapseMode.value = mode
+  treeCollapseSignal.value += 1
+}
+
+const handleCollapseOutputTree = () => {
+  syncOutputTreeCollapse('collapsed')
+}
+
+const handleExpandOutputTree = () => {
+  syncOutputTreeCollapse('expanded')
+}
+
+watch(output, () => {
+  syncOutputTreeCollapse('expanded')
+})
 </script>
 
 <style scoped>
@@ -260,6 +376,10 @@ const handleCopyOutput = () => {
   min-height: 0;
 }
 
+.tool-container--long-output .editor-layout {
+  min-height: calc(100dvh - var(--header-height) - 128px);
+}
+
 .editor-panel {
   flex: 1;
   display: flex;
@@ -284,36 +404,50 @@ const handleCopyOutput = () => {
 }
 
 .output-input-wrap {
-  position: relative;
   display: flex;
   flex-direction: column;
-  flex: 1;
+  flex: 1 1 auto;
   width: 100%;
   height: 100%;
   min-height: 0;
 }
 
-.copy-button {
-  position: absolute;
-  top: 8px;
-  right: 12px;
-  z-index: 1;
+.output-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
-.output-textarea {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
+.feedback-alert {
+  flex: 0 0 auto;
+}
+
+.json-tree-viewer {
+  flex: 1 1 auto;
   width: 100%;
   height: 100%;
   min-height: 0;
+  overflow: auto;
+  padding: var(--spacing-sm) 0;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
 }
 
-.output-textarea :deep(.n-input) {
+.output-textarea,
+:deep(.output-textarea.n-input) {
   display: flex;
-  flex: 1;
   flex-direction: column;
+  flex: 1 1 auto;
+  width: 100%;
   height: 100%;
+  min-height: 0;
 }
 
 .output-textarea :deep(.n-input__state-border),
@@ -323,19 +457,30 @@ const handleCopyOutput = () => {
 
 .output-textarea :deep(.n-input-wrapper),
 .output-textarea :deep(.n-input__textarea) {
-  flex: 1;
+  flex: 1 1 auto;
   height: 100%;
+  min-height: 0;
 }
 
 .output-textarea :deep(.n-input__textarea-el) {
   height: 100% !important;
-  min-height: 400px;
-  padding-top: 34px;
+  min-height: 0;
+  max-height: 100%;
+  overflow: auto;
+  resize: none;
 }
 
 .output-panel {
   height: 100%;
   min-height: 0;
+}
+
+.output-panel--full-height {
+  min-height: calc(100dvh - var(--header-height) - 128px);
+}
+
+.output-panel :deep(.n-card__content) {
+  overflow: hidden;
 }
 
 .controls {

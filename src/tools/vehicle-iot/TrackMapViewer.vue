@@ -1042,7 +1042,7 @@ onUnmounted(() => {
 .metric-label {
   color: var(--color-text-secondary);
   font-size: var(--font-size-xs);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .metric-tile strong {
@@ -1172,7 +1172,7 @@ onUnmounted(() => {
   border-radius: var(--radius-sm);
   background: var(--color-surface-muted);
   color: var(--color-text-primary);
-  font-weight: 700;
+  font-weight: 600;
   text-align: center;
 }
 
@@ -1195,7 +1195,7 @@ onUnmounted(() => {
 .segment-head {
   background: var(--color-surface-muted);
   color: var(--color-text-secondary);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .segment-row {

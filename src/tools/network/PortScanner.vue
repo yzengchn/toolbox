@@ -817,7 +817,7 @@ const getStatusTagType = (status: ScanStatus): StatusTagType => {
   background: var(--color-surface);
   color: var(--color-text-secondary);
   font-size: var(--font-size-xs);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .scan-row--open {

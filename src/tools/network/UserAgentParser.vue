@@ -612,7 +612,7 @@ onMounted(() => {
   margin-top: 6px;
   color: var(--color-text-primary);
   font-size: var(--font-size-md);
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.35;
   overflow-wrap: anywhere;
 }

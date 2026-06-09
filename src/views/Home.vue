@@ -1,10 +1,12 @@
 <template>
   <div class="home">
-    <section class="home-hero">
+    <section class="home-hero" aria-labelledby="home-title">
       <div class="hero-copy">
-        <p class="eyebrow">Developer Workbench</p>
-        <h1>ToolBox</h1>
-        <p class="description">编码、格式化、网络、时间和车联网调试工具集中工作台。</p>
+        <p class="eyebrow">在线工具 · DevTool</p>
+        <p id="home-title" class="home-title">ToolBox 在线开发者工具箱</p>
+        <p class="description">
+          面向开发者的在线工具集合，覆盖 JSON 格式化、Base64 编码解码、JWT 解码、时间戳转换、IP 查询、CIDR 网段计算器、端口扫描，以及 JT808、GB32960、CAN/J1939、OCPP、VIN 等车联网工具场景。
+        </p>
       </div>
 
       <div class="hero-stats" aria-label="工具统计">
@@ -30,10 +32,11 @@
           <router-link
             v-for="category in populatedCategories"
             :key="category.id"
-            :to="category.tools[0]?.path || '/home'"
+            :to="category.tools[0]?.path || '/'"
             class="category-card"
+            :style="{ '--category-color': category.color }"
           >
-            <span class="category-mark">{{ category.name.charAt(0) }}</span>
+            <span class="category-mark" aria-hidden="true"></span>
             <span class="category-copy">
               <strong>{{ category.name }}</strong>
               <small>{{ category.tools.length }} 个工具</small>
@@ -69,33 +72,78 @@
 
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import { allTools, toolCategories } from '@/tools'
+import type { ToolInfo } from '@/types'
+import { allTools, getToolCategoryColor, toolCategories } from '@/tools/catalog'
 
-const populatedCategories = toolCategories.filter(category => category.tools.length > 0)
-const featuredTools = allTools.slice(0, 8)
+const populatedCategories = toolCategories
+  .filter(category => category.tools.length > 0)
+  .map(category => ({
+    ...category,
+    color: getToolCategoryColor(category.id)
+  }))
+const featuredToolIds = [
+  'json-formatter',
+  'base64-encoder',
+  'jwt-decoder',
+  'timestamp-converter',
+  'subnet-calculator',
+  'password-generator',
+  'geohash-tool',
+  'qrcode-generator',
+  'user-agent-parser'
+]
+const toolsById = new Map(allTools.map(tool => [tool.id, tool]))
+const featuredTools = featuredToolIds
+  .map(toolId => toolsById.get(toolId))
+  .filter((tool): tool is ToolInfo => Boolean(tool))
+
+const updateHomeSeo = async () => {
+  const { setSeo, siteConfig } = await import('@/utils/seo')
+
+  setSeo({
+    title: siteConfig.title,
+    description: siteConfig.description,
+    keywords: siteConfig.keywords,
+    path: '/'
+  })
+}
 
 onMounted(() => {
-  document.title = 'ToolBox'
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(() => {
+      void updateHomeSeo()
+    }, { timeout: 2000 })
+    return
+  }
+
+  globalThis.setTimeout(() => {
+    void updateHomeSeo()
+  }, 0)
 })
 </script>
 
 <style scoped>
 .home {
   width: min(100%, var(--content-max-width));
-  min-height: 100%;
+  height: calc(100vh - var(--header-height) - 1px);
+  height: calc(100dvh - var(--header-height) - 1px);
   margin: 0 auto;
-  padding: var(--spacing-2xl);
+  padding: clamp(16px, 2vw, 24px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--spacing-lg);
+  overflow: hidden;
   color: var(--color-text-primary);
 }
 
 .home-hero {
-  display: flex;
-  align-items: flex-end;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
   justify-content: space-between;
-  gap: var(--spacing-xl);
-  min-height: 220px;
-  margin-bottom: var(--spacing-xl);
-  padding: var(--spacing-2xl);
+  gap: clamp(16px, 3vw, 32px);
+  min-height: 0;
+  padding: clamp(16px, 2vw, 22px);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   background: var(--color-surface);
@@ -106,36 +154,42 @@ onMounted(() => {
   margin: 0 0 var(--spacing-sm);
   color: var(--color-primary);
   font-size: var(--font-size-xs);
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-weight: 500;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
-h1 {
+.home-title {
   margin: 0;
-  font-size: clamp(36px, 6vw, 68px);
-  line-height: 0.95;
-  font-weight: 700;
+  font-size: clamp(22px, 2.2vw, 30px);
+  line-height: 1.18;
+  font-weight: 500;
   color: var(--color-text-primary);
   letter-spacing: 0;
 }
 
 .description {
-  max-width: 560px;
-  margin-top: var(--spacing-lg);
-  font-size: var(--font-size-lg);
+  max-width: 820px;
+  margin-top: var(--spacing-sm);
+  font-size: var(--font-size-base);
+  line-height: 1.55;
   color: var(--color-text-secondary);
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .hero-stats {
-  display: flex;
-  gap: var(--spacing-md);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(84px, 1fr));
+  gap: var(--spacing-sm);
   flex: 0 0 auto;
 }
 
 .stat {
-  min-width: 104px;
-  padding: var(--spacing-lg);
+  min-width: 84px;
+  padding: 10px 12px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface-muted);
@@ -148,8 +202,8 @@ h1 {
 
 .stat-value {
   color: var(--color-primary);
-  font-size: var(--font-size-3xl);
-  font-weight: 700;
+  font-size: 22px;
+  font-weight: 500;
   line-height: 1;
 }
 
@@ -157,17 +211,23 @@ h1 {
   margin-top: var(--spacing-xs);
   color: var(--color-text-tertiary);
   font-size: var(--font-size-xs);
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .home-grid {
   display: grid;
-  grid-template-columns: minmax(280px, 0.85fr) minmax(0, 1.35fr);
-  gap: var(--spacing-xl);
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: var(--spacing-lg);
   align-items: start;
+  min-height: 0;
 }
 
 .panel {
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   background: var(--color-surface);
@@ -179,7 +239,8 @@ h1 {
   align-items: center;
   justify-content: space-between;
   gap: var(--spacing-md);
-  padding: 18px 20px 12px;
+  flex: 0 0 auto;
+  padding: 14px 16px 10px;
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -187,29 +248,35 @@ h1 {
   margin: 0;
   color: var(--color-text-primary);
   font-size: var(--font-size-lg);
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .panel-heading span {
   color: var(--color-text-tertiary);
   font-size: var(--font-size-xs);
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .category-list,
 .tool-grid {
   display: grid;
   gap: var(--spacing-sm);
-  padding: var(--spacing-lg);
+  min-height: 0;
+  padding: var(--spacing-md);
+  overflow: hidden;
+}
+
+.category-list {
+  grid-auto-rows: minmax(44px, 1fr);
 }
 
 .category-card,
 .tool-card {
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
+  gap: var(--spacing-sm);
   min-width: 0;
-  padding: var(--spacing-md);
+  padding: 10px 12px;
   border: 1px solid transparent;
   border-radius: var(--radius-md);
   color: var(--color-text-primary);
@@ -229,16 +296,39 @@ h1 {
 
 .category-mark,
 .tool-icon {
-  flex: 0 0 36px;
-  width: 36px;
-  height: 36px;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-sm);
   background: var(--color-primary-soft);
   color: var(--color-primary);
-  font-weight: 700;
+  font-weight: 500;
+}
+
+.category-mark {
+  flex-basis: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--category-color);
+}
+
+.tool-icon {
+  flex-basis: 24px;
+  width: 24px;
+  height: 24px;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.tool-card:hover .tool-icon {
+  color: var(--color-text-primary);
 }
 
 .category-copy,
@@ -253,6 +343,7 @@ h1 {
   color: var(--color-text-primary);
   font-size: var(--font-size-sm);
   line-height: 1.35;
+  font-weight: 500;
 }
 
 .category-copy small,
@@ -263,49 +354,169 @@ h1 {
   line-height: 1.45;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .tool-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  flex: 1;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+}
+
+.tool-card {
+  min-height: 0;
 }
 
 @media (max-width: 980px) {
   .home {
-    padding: var(--spacing-xl);
+    padding: var(--spacing-lg);
+    gap: var(--spacing-md);
   }
 
-  .home-hero,
   .home-grid {
+    grid-template-columns: minmax(200px, 240px) minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  .home-hero {
     grid-template-columns: 1fr;
+    align-items: start;
   }
 
-  .home-grid {
-    display: grid;
+  .hero-stats {
+    width: min(100%, 220px);
+  }
+}
+
+@media (max-height: 720px) {
+  .home {
+    padding: var(--spacing-lg);
+    gap: var(--spacing-md);
   }
 
   .home-hero {
-    align-items: flex-start;
-    flex-direction: column;
+    padding: var(--spacing-lg);
+  }
+
+  .description {
+    -webkit-line-clamp: 1;
+  }
+
+  .panel-heading {
+    padding: 12px 14px 8px;
+  }
+
+  .category-list,
+  .tool-grid {
+    padding: 10px;
   }
 }
 
 @media (max-width: 640px) {
   .home {
-    padding: var(--spacing-lg);
+    padding: var(--spacing-md);
   }
 
   .home-hero {
-    padding: var(--spacing-xl);
+    padding: var(--spacing-md);
   }
 
-  .hero-stats,
-  .tool-grid {
-    width: 100%;
+  .home-grid {
     grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
   }
 
   .hero-stats {
+    width: 100%;
     display: grid;
+  }
+
+  .categories-panel {
+    height: auto;
+  }
+
+  .category-list {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-auto-rows: 36px;
+  }
+
+  .category-card {
+    justify-content: center;
+    padding: 8px;
+  }
+
+  .category-mark,
+  .category-copy small {
+    display: none;
+  }
+
+  .category-copy {
+    align-items: center;
+  }
+
+  .category-copy strong {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tool-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+  }
+
+  .tool-card {
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    padding: 8px;
+    text-align: center;
+  }
+
+  .tool-copy {
+    align-items: center;
+  }
+
+  .tool-copy strong {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tool-copy small {
+    -webkit-line-clamp: 1;
+  }
+}
+
+@media (max-width: 420px), (max-height: 620px) {
+  .eyebrow,
+  .description,
+  .categories-panel .panel-heading span,
+  .category-copy small {
+    display: none;
+  }
+
+  .home-title {
+    font-size: clamp(20px, 5.5vw, 24px);
+  }
+
+  .category-list {
+    grid-auto-rows: 32px;
+  }
+
+  .category-mark {
+    flex-basis: 8px;
+    width: 8px;
+    height: 8px;
+  }
+
+  .tool-card {
+    padding: 8px;
   }
 }
 </style>

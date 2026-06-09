@@ -322,7 +322,7 @@ handleParse()
 .summary-tile span {
   color: var(--color-text-secondary);
   font-size: var(--font-size-xs);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .summary-tile strong {
@@ -374,7 +374,7 @@ handleParse()
 
 .field-label {
   color: var(--color-text-secondary);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .field-value {
@@ -418,7 +418,7 @@ handleParse()
 .dtc-card span {
   color: var(--color-text-secondary);
   font-size: var(--font-size-xs);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .metric-card strong,

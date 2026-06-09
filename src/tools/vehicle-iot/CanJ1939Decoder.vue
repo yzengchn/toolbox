@@ -357,7 +357,7 @@ handleDecode()
 .summary-tile span {
   color: var(--color-text-secondary);
   font-size: var(--font-size-xs);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .summary-tile strong {
@@ -405,7 +405,7 @@ handleDecode()
 
 .field-label {
   color: var(--color-text-secondary);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .field-value {
@@ -451,7 +451,7 @@ handleDecode()
 .signal-card span {
   color: var(--color-text-secondary);
   font-size: var(--font-size-xs);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .dtc-card strong,

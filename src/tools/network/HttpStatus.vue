@@ -228,7 +228,7 @@ const getAlertType = (code: number): 'success' | 'info' | 'warning' | 'error' =>
 
 .status-code-display .code {
   font-size: 32px;
-  font-weight: bold;
+  font-weight: 600;
   padding: var(--spacing-xs) var(--spacing-md);
   border-radius: var(--radius-sm);
 }
@@ -291,7 +291,7 @@ const getAlertType = (code: number): 'success' | 'info' | 'warning' | 'error' =>
 }
 
 .code-badge {
-  font-weight: 600;
+  font-weight: 500;
   padding: 2px 8px;
   border-radius: var(--radius-sm);
   font-size: var(--font-size-xs);

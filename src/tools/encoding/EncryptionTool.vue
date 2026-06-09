@@ -788,7 +788,7 @@ watch([symmetricMode, symmetricAlgorithm, symmetricSecret], () => {
   margin: 0;
   color: var(--color-text-primary);
   font-size: var(--font-size-base);
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.35;
 }
 
@@ -796,7 +796,7 @@ watch([symmetricMode, symmetricAlgorithm, symmetricSecret], () => {
   flex: 0 0 auto;
   color: var(--color-text-tertiary);
   font-size: var(--font-size-xs);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .settings-row {

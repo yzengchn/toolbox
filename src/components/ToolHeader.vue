@@ -44,7 +44,7 @@ defineProps<{
   min-width: 0;
   font-size: var(--font-size-lg);
   line-height: 1.3;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--color-text-primary);
   margin: 0;
   letter-spacing: 0;

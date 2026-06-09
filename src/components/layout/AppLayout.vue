@@ -1,40 +1,27 @@
 <template>
-  <n-config-provider :theme="naiveTheme" :theme-overrides="naiveThemeOverrides" :hljs="hljs">
-    <n-message-provider>
-      <div class="app-layout">
-        <AppHeader />
-        <div class="layout-body">
-          <AppSidebar />
-          <button
-            class="sidebar-backdrop"
-            :class="{ visible: !appStore.sidebarCollapsed }"
-            type="button"
-            aria-label="关闭侧边栏"
-            @click="closeSidebar"
-          ></button>
-          <AppContent />
-        </div>
-      </div>
-    </n-message-provider>
-  </n-config-provider>
+  <div class="app-layout">
+    <AppHeader />
+    <div class="layout-body">
+      <AppSidebar />
+      <button
+        class="sidebar-backdrop"
+        :class="{ visible: !appStore.sidebarCollapsed }"
+        type="button"
+        aria-label="关闭侧边栏"
+        @click="closeSidebar"
+      ></button>
+      <AppContent />
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount } from 'vue'
-import { NConfigProvider, NMessageProvider } from 'naive-ui'
-import hljs from 'highlight.js/lib/core'
-import javascript from 'highlight.js/lib/languages/javascript'
-import plaintext from 'highlight.js/lib/languages/plaintext'
-import { useTheme } from '@/composables/useTheme'
+import { onBeforeUnmount, onMounted } from 'vue'
 import { useAppStore } from '@/stores/app'
 import AppHeader from './AppHeader.vue'
 import AppSidebar from './AppSidebar.vue'
 import AppContent from './AppContent.vue'
 
-hljs.registerLanguage('javascript', javascript)
-hljs.registerLanguage('plaintext', plaintext)
-
-const { naiveTheme, naiveThemeOverrides } = useTheme()
 const appStore = useAppStore()
 
 const mobileQuery = window.matchMedia('(max-width: 860px)')

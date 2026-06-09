@@ -8,38 +8,130 @@
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" sizes="512x512" href="/favicon-512x512.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ToolBox - 开发者工具箱</title>
-    <meta name="description" content="ToolBox 是一个功能强大的在线开发者工具箱，提供编码转换、格式化工具、时间工具、网络工具、车联网工具等多种实用功能。支持 JSON/XML/SQL 格式化、Base64/Hash 计算、JWT 解码、时间戳转换、IP 查询、经纬度 GeoHash、JT808 协议解析等。" />
-    <meta name="keywords" content="开发者工具,在线工具,JSON格式化,Base64编码,Hash计算,JWT解码,时间戳转换,IP查询,GeoHash,JT808,车联网,编码转换,格式化工具" />
+    <title>ToolBox 在线工具 - 开发者工具箱 DevTool</title>
+    <meta name="description" content="ToolBox 是面向开发者的在线工具箱，提供 JSON、SQL、XML 格式化，Base64、JWT、Hash、URL 编码解码，时间戳转换、IP 查询、CIDR 网段计算器、端口扫描、车联网报文解析、CAN/J1939 解码、OCPP 报文校验、VIN 解析等 DevTool 工具。" />
+    <meta name="keywords" content="在线工具,开发者工具,DevTool,DevTools,ToolBox,开发工具箱,在线开发工具,JSON格式化,SQL格式化,Base64编码,JWT解码,Hash计算,URL编码,时间戳转换,IP查询,CIDR 网段计算器,CIDR计算器,子网计算器,端口扫描,密码生成器,UUID生成器,车联网工具,车联网报文解析,车联网报文构造,JT808解析,JT809解析,JT1078解析,GB32960解析,GB/T 32960解析,GB/T 27930解析,OCPP报文校验,CAN解码,J1939解码,J1939 PGN计算器,DBC信号解析,CAN信号分析,OBD诊断,UDS诊断,VIN解析,车架号校验,轨迹点分析,坐标系转换,GeoHash编码,车联网日志分析" />
     <meta name="author" content="zy" />
-
-    <!-- DNS 预解析 -->
-    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
-    <link rel="dns-prefetch" href="https://unpkg.com" />
-
-    <!-- 预连接 -->
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link rel="canonical" href="https://tools.neocockpit.cn" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="ToolBox - 开发者工具箱" />
-    <meta property="og:description" content="功能强大的在线开发者工具箱，提供编码转换、格式化、时间、网络、车联网等多种实用工具。" />
+    <meta property="og:site_name" content="ToolBox" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta property="og:title" content="ToolBox 在线工具 - 开发者工具箱 DevTool" />
+    <meta property="og:description" content="面向开发者的在线工具箱，提供 JSON 格式化、Base64 编码、JWT 解码、时间戳转换、IP 查询、CIDR 网段计算器，以及 JT808、GB32960、CAN/J1939、OCPP、VIN 等车联网工具。" />
+    <meta property="og:url" content="https://tools.neocockpit.cn" />
+    <meta property="og:image" content="https://tools.neocockpit.cn/logo-icon.png" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="ToolBox - 开发者工具箱" />
-    <meta name="twitter:description" content="功能强大的在线开发者工具箱，提供编码转换、格式化、时间、网络、车联网等多种实用工具。" />
+    <meta name="twitter:title" content="ToolBox 在线工具 - 开发者工具箱 DevTool" />
+    <meta name="twitter:description" content="面向开发者的在线工具箱，提供 JSON 格式化、Base64 编码、JWT 解码、时间戳转换、IP 查询、CIDR 网段计算器，以及 JT808、GB32960、CAN/J1939、OCPP、VIN 等车联网工具。" />
+    <meta name="twitter:image" content="https://tools.neocockpit.cn/logo-icon.png" />
 
     <!-- 搜索引擎 -->
-    <meta name="robots" content="index, follow" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="googlebot" content="index, follow" />
     <meta name="baiduspider" content="index, follow" />
 
     <!-- 性能优化 -->
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="theme-color" content="#ffffff" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://tools.neocockpit.cn/#website",
+            "name": "ToolBox",
+            "alternateName": ["在线工具", "开发者工具", "DevTool", "DevTools", "车联网工具", "车联网报文解析"],
+            "url": "https://tools.neocockpit.cn",
+            "inLanguage": "zh-CN",
+            "description": "ToolBox 是面向开发者的在线工具箱，提供 JSON、SQL、XML 格式化，Base64、JWT、Hash、URL 编码解码，时间戳转换、IP 查询、CIDR 网段计算器、端口扫描、车联网报文解析、CAN/J1939 解码、OCPP 报文校验、VIN 解析等 DevTool 工具。"
+          },
+          {
+            "@type": "WebApplication",
+            "@id": "https://tools.neocockpit.cn/#app",
+            "name": "ToolBox 在线开发者工具箱",
+            "url": "https://tools.neocockpit.cn",
+            "applicationCategory": "DeveloperApplication",
+            "operatingSystem": "Web",
+            "inLanguage": "zh-CN",
+            "description": "面向开发者的在线工具集合，覆盖 JSON 格式化、Base64 编码解码、JWT 解码、时间戳转换、IP 查询、CIDR 网段计算器、端口扫描、车联网报文解析、CAN/J1939 解码、OCPP 报文校验、VIN 解析等 DevTool 场景。",
+            "keywords": "在线工具,开发者工具,DevTool,DevTools,ToolBox,开发工具箱,在线开发工具,JSON格式化,Base64编码,JWT解码,时间戳转换,IP查询,CIDR 网段计算器,CIDR计算器,子网计算器,端口扫描,车联网工具,车联网报文解析,车联网报文构造,JT808解析,JT809解析,JT1078解析,GB32960解析,GB/T 32960解析,GB/T 27930解析,OCPP报文校验,CAN解码,J1939解码,J1939 PGN计算器,DBC信号解析,CAN信号分析,OBD诊断,UDS诊断,VIN解析,车架号校验,轨迹点分析,坐标系转换,GeoHash编码,车联网日志分析",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "CNY"
+            },
+            "featureList": [
+              "JSON 格式化",
+              "SQL 格式化",
+              "XML/HTML 格式化",
+              "Base64 编码/解码",
+              "JWT 解码",
+              "Hash 计算",
+              "URL 编码/解码",
+              "时间戳转换",
+              "IP 地址查询",
+              "CIDR 网段计算器",
+              "端口扫描工具",
+              "密码生成器",
+              "UUID 生成器",
+              "JT808/JT809 报文解析",
+              "JT1078 音视频流解析",
+              "GB/T 32960 报文解析",
+              "GB/T 27930 充电 CAN 报文解析",
+              "OCPP 报文校验",
+              "车联网报文构造器",
+              "VIN 解析/校验",
+              "J1939 ID/PGN 计算器",
+              "CAN/J1939 解码器",
+              "CAN 信号曲线分析",
+              "OBD/UDS 诊断工具",
+              "轨迹点分析",
+              "车联网日志时间线"
+            ]
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
+    <noscript>
+      <main>
+        <h1>ToolBox 在线开发者工具箱</h1>
+        <p>
+          ToolBox 提供在线工具、开发者工具和常用 DevTool，包括 JSON 格式化、SQL 格式化、Base64 编码解码、JWT 解码、时间戳转换、IP 查询、CIDR 网段计算器、端口扫描、密码生成器、UUID 生成器、车联网报文解析、CAN/J1939 解码、OCPP 报文校验、VIN 解析等。
+        </p>
+        <nav aria-label="常用在线工具">
+          <a href="/tool/json-formatter">JSON 格式化</a>
+          <a href="/tool/sql-formatter">SQL 格式化</a>
+          <a href="/tool/base64-encoder">Base64 编码/解码</a>
+          <a href="/tool/jwt-decoder">JWT 解码</a>
+          <a href="/tool/timestamp-converter">时间戳转换</a>
+          <a href="/tool/ip-lookup">IP 地址查询</a>
+          <a href="/tool/subnet-calculator">CIDR 网段计算器</a>
+          <a href="/tool/port-scanner">端口扫描工具</a>
+          <a href="/tool/password-generator">密码生成器</a>
+          <a href="/tool/uuid-generator">UUID 生成器</a>
+          <a href="/tool/jt808-jt809-parser">JT808/JT809 解析</a>
+          <a href="/tool/jt1078-stream-parser">JT1078 音视频流解析</a>
+          <a href="/tool/gb32960-parser">GB/T 32960 解析</a>
+          <a href="/tool/gbt27930-parser">GB/T 27930 解析</a>
+          <a href="/tool/ocpp-message-tool">OCPP 报文校验</a>
+          <a href="/tool/vehicle-message-builder">报文构造器</a>
+          <a href="/tool/vin-decoder">VIN 解析/校验</a>
+          <a href="/tool/j1939-id-calculator">J1939 ID/PGN 计算器</a>
+          <a href="/tool/can-j1939-decoder">CAN/J1939 解码器</a>
+          <a href="/tool/can-signal-chart">CAN 信号曲线分析</a>
+          <a href="/tool/obd-uds-diagnostic">OBD/UDS 诊断工具</a>
+          <a href="/tool/track-map-viewer">轨迹点分析</a>
+          <a href="/tool/vehicle-log-timeline">日志时间线</a>
+        </nav>
+      </main>
+    </noscript>
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

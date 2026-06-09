@@ -1,7 +1,7 @@
 <template>
   <div class="tool-container">
     <ToolHeader
-      title="车联网日志时间线"
+      title="日志时间线"
       description="把 JT808、GB32960、OCPP、CAN、诊断和定位等混合日志按时间归档，辅助排查链路、设备和事件顺序"
     />
 
@@ -290,7 +290,7 @@ const copyTimeline = () => {
     event.content,
     event.tags.length ? event.tags.map(tag => `${tag.label}=${tag.value}`).join(', ') : ''
   ].filter(Boolean).join('\n'))
-  copy(lines.join('\n\n'), '已复制车联网日志时间线')
+  copy(lines.join('\n\n'), '已复制日志时间线')
 }
 
 const severityTagType = (severity: VehicleLogSeverity): 'error' | 'warning' | 'success' | 'info' => {
@@ -372,7 +372,7 @@ handleParse()
 .filter-field > span {
   color: var(--color-text-secondary);
   font-size: var(--font-size-xs);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .parse-summary {
@@ -397,7 +397,7 @@ handleParse()
 .summary-tile span {
   color: var(--color-text-secondary);
   font-size: var(--font-size-xs);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .summary-tile strong {

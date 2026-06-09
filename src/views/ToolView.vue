@@ -1,27 +1,34 @@
 <template>
-  <div class="tool-view">
-    <component :is="toolComponent" v-if="toolComponent" />
+  <n-config-provider :theme="naiveTheme" :theme-overrides="naiveThemeOverrides" :hljs="hljs">
+    <n-message-provider>
+      <div class="tool-view">
+        <component :is="toolComponent" v-if="toolComponent" />
 
-    <div v-if="!tool" class="not-found">
-      <n-result
-        status="404"
-        title="工具未找到"
-        description="抱歉，找不到该工具"
-      >
-        <template #footer>
-          <n-button @click="router.push('/')">返回首页</n-button>
-        </template>
-      </n-result>
-    </div>
-  </div>
+        <div v-if="!tool" class="not-found">
+          <n-result
+            status="404"
+            title="工具未找到"
+            description="抱歉，找不到该工具"
+          >
+            <template #footer>
+              <n-button @click="router.push('/')">返回首页</n-button>
+            </template>
+          </n-result>
+        </div>
+      </div>
+    </n-message-provider>
+  </n-config-provider>
 </template>
 
 <script setup lang="ts">
-import { computed, watch, provide } from 'vue'
+import { computed, watch, provide, shallowRef, type Component } from 'vue'
 import { useRouter } from 'vue-router'
-import { NResult, NButton } from 'naive-ui'
-import { getToolById } from '@/tools'
+import { NButton, NConfigProvider, NMessageProvider, NResult } from 'naive-ui'
+import type { HLJSApi } from 'highlight.js'
+import { getToolById, getToolCategoryName } from '@/tools/catalog'
 import { useAppStore } from '@/stores/app'
+import { useNaiveTheme } from '@/composables/useNaiveTheme'
+import { getAbsoluteUrl, setSeo, siteConfig } from '@/utils/seo'
 
 const props = defineProps<{
   toolId: string
@@ -29,6 +36,7 @@ const props = defineProps<{
 
 const router = useRouter()
 const appStore = useAppStore()
+const { naiveTheme, naiveThemeOverrides } = useNaiveTheme()
 
 const tool = computed(() => getToolById(props.toolId))
 const isFavorite = computed(() => appStore.isFavorite(props.toolId))
@@ -42,11 +50,63 @@ provide('toolId', props.toolId)
 provide('isFavorite', isFavorite)
 provide('toggleFavorite', toggleFavorite)
 
-const toolComponent = computed(() => {
-  if (!tool.value) return null
+const toolComponent = shallowRef<Component | null>(null)
+const hljs = shallowRef<HLJSApi>()
+let componentLoadVersion = 0
+let hljsLoading: Promise<void> | null = null
 
-  return tool.value.component
-})
+const loadHighlight = () => {
+  if (hljs.value) {
+    return Promise.resolve()
+  }
+
+  if (hljsLoading) {
+    return hljsLoading
+  }
+
+  hljsLoading = Promise.all([
+    import('highlight.js/lib/core'),
+    import('highlight.js/lib/languages/javascript'),
+    import('highlight.js/lib/languages/plaintext')
+  ])
+    .then(([coreModule, javascriptModule, plaintextModule]) => {
+      const instance = coreModule.default
+
+      instance.registerLanguage('javascript', javascriptModule.default)
+      instance.registerLanguage('plaintext', plaintextModule.default)
+      instance.registerLanguage('text', plaintextModule.default)
+      hljs.value = instance
+    })
+    .catch((error) => {
+      console.error('Load highlight.js failed:', error)
+    })
+    .finally(() => {
+      hljsLoading = null
+    })
+
+  return hljsLoading
+}
+
+watch(
+  tool,
+  async (newTool) => {
+    const version = ++componentLoadVersion
+    toolComponent.value = null
+
+    if (!newTool) {
+      return
+    }
+
+    void loadHighlight()
+
+    const { getToolComponentById } = await import('@/tools')
+
+    if (version === componentLoadVersion) {
+      toolComponent.value = getToolComponentById(newTool.id) ?? null
+    }
+  },
+  { immediate: true }
+)
 
 // 更新页面标题和meta描述
 watch(
@@ -54,28 +114,54 @@ watch(
   (newTool) => {
     if (newTool) {
       appStore.addRecentTool(newTool.id)
-      document.title = `${newTool.name} - ToolBox`
+      const categoryName = getToolCategoryName(newTool.category)
+      const title = `${newTool.name} - 在线${categoryName} - ToolBox DevTool`
+      const description = `${newTool.description}。ToolBox 在线开发者工具箱，提供 ${newTool.name}、在线工具、开发者工具和常用 DevTool 能力。`
+      const keywords = [
+        newTool.name,
+        `${newTool.name}在线`,
+        categoryName,
+        ...newTool.keywords,
+        '在线工具',
+        '开发者工具',
+        'DevTool',
+        'ToolBox'
+      ]
 
-      // 更新meta描述
-      let metaDescription = document.querySelector('meta[name="description"]')
-      if (!metaDescription) {
-        metaDescription = document.createElement('meta')
-        metaDescription.setAttribute('name', 'description')
-        document.head.appendChild(metaDescription)
-      }
-      metaDescription.setAttribute('content', `${newTool.description} - ToolBox 在线开发者工具箱`)
-
-      // 更新meta关键词
-      let metaKeywords = document.querySelector('meta[name="keywords"]')
-      if (!metaKeywords) {
-        metaKeywords = document.createElement('meta')
-        metaKeywords.setAttribute('name', 'keywords')
-        document.head.appendChild(metaKeywords)
-      }
-      const keywords = [...newTool.keywords, newTool.name, 'ToolBox', '在线工具'].join(',')
-      metaKeywords.setAttribute('content', keywords)
+      setSeo({
+        title,
+        description,
+        keywords,
+        path: newTool.path,
+        jsonLd: {
+          '@context': 'https://schema.org',
+          '@type': 'SoftwareApplication',
+          name: newTool.name,
+          applicationCategory: 'DeveloperApplication',
+          operatingSystem: 'Web',
+          url: getAbsoluteUrl(newTool.path),
+          inLanguage: 'zh-CN',
+          description,
+          keywords: keywords.join(','),
+          isPartOf: {
+            '@type': 'WebApplication',
+            name: siteConfig.name,
+            url: getAbsoluteUrl('/')
+          },
+          offers: {
+            '@type': 'Offer',
+            price: '0',
+            priceCurrency: 'CNY'
+          }
+        }
+      })
     } else {
-      document.title = 'ToolBox'
+      setSeo({
+        title: '工具未找到 - ToolBox 在线工具',
+        description: 'ToolBox 在线开发者工具箱未找到该工具，请返回首页选择 JSON 格式化、Base64 编码、JWT 解码、时间戳转换等在线工具。',
+        keywords: ['工具未找到', '在线工具', '开发者工具', 'DevTool', 'ToolBox'],
+        path: '/'
+      })
     }
   },
   { immediate: true }

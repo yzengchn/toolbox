@@ -4,8 +4,7 @@
     :class="{ collapsed: appStore.sidebarCollapsed }"
   >
     <div class="sidebar-content">
-      
-      <n-scrollbar>
+      <div class="sidebar-scroll">
         <div class="tools-list">
           <div
             v-for="category in sidebarCategories"
@@ -38,33 +37,22 @@
             <p>工具开发中...</p>
           </div>
         </div>
-      </n-scrollbar>
+      </div>
     </div>
   </aside>
 </template>
 
 <script setup lang="ts">
-import { NScrollbar } from 'naive-ui'
 import { useAppStore } from '@/stores/app'
-import { toolCategories, allTools } from '@/tools'
+import { toolCategories, allTools, getToolCategoryColor } from '@/tools/catalog'
 
 const appStore = useAppStore()
 
 const mobileQuery = window.matchMedia('(max-width: 860px)')
 
-const categoryColors: Record<string, string> = {
-  utilities: '#35c982',
-  encoding: '#64b5f6',
-  formatter: '#f2c97d',
-  time: '#a78bfa',
-  network: '#fb7185',
-  'vehicle-iot': '#22d3ee',
-  connection: '#f97316'
-}
-
 const sidebarCategories = toolCategories.map(category => ({
   ...category,
-  color: categoryColors[category.id] ?? '#64b5f6'
+  color: getToolCategoryColor(category.id)
 }))
 
 const handleToolClick = () => {
@@ -102,6 +90,29 @@ const handleToolClick = () => {
   min-height: 0;
 }
 
+.sidebar-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--color-sidebar-muted) 44%, transparent) transparent;
+}
+
+.sidebar-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--color-sidebar-muted) 42%, transparent);
+  background-clip: content-box;
+}
+
 .sidebar-head {
   display: flex;
   align-items: center;
@@ -119,8 +130,8 @@ const handleToolClick = () => {
   margin: 0 0 2px;
   color: var(--color-sidebar-muted);
   font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   line-height: 1;
   text-transform: uppercase;
 }
@@ -129,7 +140,7 @@ const handleToolClick = () => {
   margin: 0;
   color: var(--color-sidebar-text);
   font-size: var(--font-size-lg);
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.25;
 }
 
@@ -144,7 +155,7 @@ const handleToolClick = () => {
   background: color-mix(in srgb, var(--color-sidebar-active) 14%, transparent);
   color: var(--color-sidebar-active);
   font-size: var(--font-size-xs);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .tools-list {
@@ -160,7 +171,7 @@ const handleToolClick = () => {
   align-items: center;
   gap: var(--spacing-sm);
   font-size: var(--font-size-xs);
-  font-weight: 600;
+  font-weight: 500;
   color: var(--color-sidebar-muted);
   text-transform: uppercase;
   padding: var(--spacing-xs) var(--spacing-sm);
@@ -200,7 +211,7 @@ const handleToolClick = () => {
   color: var(--color-sidebar-text);
   text-decoration: none;
   font-size: var(--font-size-sm);
-  font-weight: 600;
+  font-weight: 500;
   transition:
     background-color var(--transition-fast),
     border-color var(--transition-fast),
@@ -217,7 +228,7 @@ const handleToolClick = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
+  font-weight: 500;
   font-size: 12px;
   border-radius: var(--radius-sm);
   border: 1px solid transparent;

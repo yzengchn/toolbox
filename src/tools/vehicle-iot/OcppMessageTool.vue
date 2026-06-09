@@ -374,7 +374,7 @@ loadDemo()
 .control-field > span {
   color: var(--color-text-secondary);
   font-size: var(--font-size-xs);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .control-field--version {
@@ -412,7 +412,7 @@ loadDemo()
 .template-main span {
   color: var(--color-text-secondary);
   font-size: var(--font-size-xs);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .template-main p {
@@ -448,7 +448,7 @@ loadDemo()
 .summary-tile span {
   color: var(--color-text-secondary);
   font-size: var(--font-size-xs);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .summary-tile strong {

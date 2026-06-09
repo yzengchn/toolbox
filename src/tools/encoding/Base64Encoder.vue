@@ -70,7 +70,7 @@
                   v-model:value="input"
                   type="textarea"
                   :placeholder="inputPlaceholder"
-                  :rows="10"
+                  :rows="18"
                   class="editor-input"
                   clearable
                 />
@@ -87,7 +87,7 @@
                   v-model:value="output"
                   type="textarea"
                   placeholder="结果将显示在这里"
-                  :rows="10"
+                  :rows="18"
                   class="editor-input"
                   readonly
                 />
@@ -228,7 +228,7 @@ watch([input, mode, encodingType, base58CheckVersionHex, bech32Hrp], debouncedUp
   padding: var(--spacing-sm) var(--spacing-md) var(--spacing-md);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: auto;
 }
 
 .tool-content {
@@ -306,7 +306,7 @@ watch([input, mode, encodingType, base58CheckVersionHex, bech32Hrp], debouncedUp
 .editor-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  min-height: 0;
+  min-height: clamp(520px, 64vh, 760px);
   gap: var(--spacing-sm);
   padding: var(--spacing-sm);
   border: 1px solid var(--color-border-strong);
@@ -384,7 +384,8 @@ watch([input, mode, encodingType, base58CheckVersionHex, bech32Hrp], debouncedUp
 
   .editor-grid {
     grid-template-columns: 1fr;
-    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: minmax(320px, 1fr) minmax(320px, 1fr);
+    min-height: 700px;
   }
 }
 
@@ -416,6 +417,7 @@ watch([input, mode, encodingType, base58CheckVersionHex, bech32Hrp], debouncedUp
   }
 
   .editor-grid {
+    min-height: clamp(440px, 58vh, 620px);
     padding: var(--spacing-xs);
   }
 

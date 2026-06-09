@@ -1,3 +1,6 @@
+@import '@fontsource/noto-sans-sc/chinese-simplified-400.css';
+@import '@fontsource/noto-sans-sc/chinese-simplified-500.css';
+@import '@fontsource/noto-sans-sc/chinese-simplified-600.css';
 @import './variables.css';
 
 * {
@@ -14,11 +17,14 @@ html {
 body {
   font-family: var(--font-family);
   font-size: var(--font-size-base);
+  font-weight: 400;
   line-height: 1.55;
   color: var(--color-text-primary);
   background: var(--color-bg-primary);
   font-optical-sizing: auto;
   font-synthesis: none;
+  font-synthesis-weight: none;
+  font-synthesis-style: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -98,7 +104,7 @@ select {
 
 .n-card-header__main {
   font-size: var(--font-size-lg) !important;
-  font-weight: 600 !important;
+  font-weight: 500 !important;
   color: var(--color-text-primary) !important;
 }
 
@@ -117,7 +123,7 @@ select {
 
 .n-button {
   border-radius: var(--radius-sm) !important;
-  font-weight: 600 !important;
+  font-weight: 500 !important;
   transition:
     border-color var(--transition-fast),
     background-color var(--transition-fast),
@@ -218,7 +224,7 @@ select {
 
 .n-tag {
   border-radius: var(--radius-sm) !important;
-  font-weight: 600 !important;
+  font-weight: 500 !important;
 }
 
 .n-empty,

@@ -322,7 +322,7 @@ handleParse()
 .support-item span {
   color: var(--color-text-secondary);
   font-size: var(--font-size-xs);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .summary-tile strong,
@@ -381,7 +381,7 @@ handleParse()
 
 .field-label {
   color: var(--color-text-secondary);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .field-value {
@@ -438,7 +438,7 @@ handleParse()
   color: #0369a1;
   font-family: var(--font-mono);
   font-size: var(--font-size-xs);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .support-card {

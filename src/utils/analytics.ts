@@ -1,5 +1,27 @@
 import { analyticsConfig } from '@/config/analytics'
 
+const idleDelay = 1500
+
+const runWhenIdle = (callback: () => void) => {
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(callback, { timeout: 3000 })
+    return
+  }
+
+  globalThis.setTimeout(callback, idleDelay)
+}
+
+const runAfterPageLoad = (callback: () => void) => {
+  const schedule = () => runWhenIdle(callback)
+
+  if (document.readyState === 'complete') {
+    schedule()
+    return
+  }
+
+  window.addEventListener('load', schedule, { once: true })
+}
+
 /**
  * 初始化百度统计
  */
@@ -9,7 +31,12 @@ function initBaiduAnalytics() {
     return
   }
 
+  if (!analyticsConfig.baidu.id || analyticsConfig.baidu.id === 'YOUR_BAIDU_ANALYTICS_ID') {
+    return
+  }
+
   const hm = document.createElement('script')
+  hm.async = true
   hm.src = `https://hm.baidu.com/hm.js?${analyticsConfig.baidu.id}`
   const s = document.getElementsByTagName('script')[0]
   s.parentNode?.insertBefore(hm, s)
@@ -23,6 +50,10 @@ function initBaiduAnalytics() {
 function initGoogleAnalytics() {
   if (!analyticsConfig.enabled || !analyticsConfig.google.enabled) {
     console.log('[Analytics] Google Analytics 已禁用（开发环境）')
+    return
+  }
+
+  if (!analyticsConfig.google.id || analyticsConfig.google.id === 'G-XXXXXXXXXX') {
     return
   }
 
@@ -52,8 +83,10 @@ export function initAnalytics() {
     return
   }
 
-  initBaiduAnalytics()
-  initGoogleAnalytics()
+  runAfterPageLoad(() => {
+    initBaiduAnalytics()
+    initGoogleAnalytics()
+  })
 }
 
 // 类型声明

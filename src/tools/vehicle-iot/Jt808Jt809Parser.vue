@@ -773,7 +773,7 @@ handleNowTime()
 .summary-tile span {
   color: var(--color-text-secondary);
   font-size: var(--font-size-xs);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .summary-tile strong {
@@ -827,7 +827,7 @@ handleNowTime()
 
 .field-label {
   color: var(--color-text-secondary);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .field-value {
@@ -859,7 +859,7 @@ handleNowTime()
 .mini-tool h3 {
   margin: 0;
   font-size: var(--font-size-base);
-  font-weight: 600;
+  font-weight: 500;
   color: var(--color-text-primary);
 }
 
