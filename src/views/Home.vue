@@ -88,6 +88,8 @@ const populatedCategories = toolCategories
     ...category,
     color: getToolCategoryColor(category.id)
   }))
+
+const featuredToolLimit = 9
 const featuredToolIds = [
   'json-formatter',
   'base64-encoder',
@@ -97,13 +99,13 @@ const featuredToolIds = [
   'password-generator',
   'regex-tester',
   'geohash-tool',
-  'qrcode-generator',
-  'user-agent-parser'
+  'qrcode-generator'
 ]
 const toolsById = new Map(allTools.map(tool => [tool.id, tool]))
 const featuredTools = featuredToolIds
   .map(toolId => toolsById.get(toolId))
   .filter((tool): tool is ToolInfo => Boolean(tool))
+  .slice(0, featuredToolLimit)
 
 const updateHomeSeo = async () => {
   const { setSeo, siteConfig } = await import('@/utils/seo')
