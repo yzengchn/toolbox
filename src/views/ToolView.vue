@@ -256,8 +256,9 @@ watch(
 }
 
 .tool-view :deep(.tool-container) {
-  width: min(100%, var(--content-max-width));
-  margin: 0 auto;
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin-inline: 0 auto;
   min-height: 100%;
   padding-top: var(--spacing-sm);
 }
@@ -351,9 +352,4 @@ watch(
   background: var(--color-bg-secondary);
 }
 
-@media (max-width: 720px) {
-  .tool-view :deep(.tool-container) {
-    width: 100%;
-  }
-}
 </style>
