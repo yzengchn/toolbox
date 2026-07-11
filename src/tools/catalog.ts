@@ -333,6 +333,33 @@ export const allTools: ToolInfo[] = [
     category: 'connection',
     keywords: ['mqtt', 'broker', 'topic', 'publish', 'subscribe', '物联网', '连接'],
     path: '/tool/mqtt-client'
+  },
+  {
+    id: 'text-diff',
+    name: '文本比较',
+    description: '逐行比较两段文本，高亮显示新增、删除与修改行，支持并排与统一差异视图',
+    icon: 'mdi:file-compare',
+    category: 'file',
+    keywords: ['diff', 'compare', '文本比较', '比较', '差异', '对比', 'line', 'beyond compare', 'merge'],
+    path: '/tool/text-diff'
+  },
+  {
+    id: 'file-dedup',
+    name: '文件去重',
+    description: '上传两个文本文件（每行一个 ID），从文件 A 中筛除已出现在文件 B 中的行，导出去重结果',
+    icon: 'mdi:file-multiple-outline',
+    category: 'file',
+    keywords: ['dedup', '去重', '文件', '筛选', '排除', 'ID', 'blocklist', '差集', 'A minus B'],
+    path: '/tool/file-dedup'
+  },
+  {
+    id: 'tree-generator',
+    name: '树形目录生成器',
+    description: '自由拼接目录与文件名称，实时生成可复制的树形目录结构，支持 GitHub 风格、连接线与缩进输出',
+    icon: 'mdi:file-tree-outline',
+    category: 'file',
+    keywords: ['tree', '目录', '树形', '目录结构', 'tree', 'generate', 'file tree', 'project structure', 'README', '生成器'],
+    path: '/tool/tree-generator'
   }
 ]
 
@@ -371,6 +398,11 @@ const categoryMeta: Array<Omit<ToolCategoryInfo, 'tools'>> = [
     id: 'connection',
     name: '连接工具',
     icon: 'mdi:connection'
+  },
+  {
+    id: 'file',
+    name: '文件工具',
+    icon: 'mdi:folder-multiple-outline'
   }
 ]
 
@@ -381,7 +413,8 @@ export const toolCategoryColors: Record<ToolCategory, string> = {
   time: '#a78bfa',
   network: '#fb7185',
   'vehicle-iot': '#22d3ee',
-  connection: '#f97316'
+  connection: '#f97316',
+  file: '#34d399'
 }
 
 const toolsByCategory = allTools.reduce((result, tool) => {

@@ -40,7 +40,10 @@ const toolComponentLoaders: Record<string, ToolComponentLoader> = {
   'geohash-tool': () => import('./vehicle-iot/GeoHashTool.vue'),
   'vehicle-log-timeline': () => import('./vehicle-iot/VehicleLogTimelineTool.vue'),
   'websocket-client': () => import('./connection/WebSocketClient.vue'),
-  'mqtt-client': () => import('./connection/MqttClient.vue')
+  'mqtt-client': () => import('./connection/MqttClient.vue'),
+  'text-diff': () => import('./file/TextCompare.vue'),
+  'file-dedup': () => import('./file/FileDedup.vue'),
+  'tree-generator': () => import('./file/TreeGenerator.vue')
 }
 
 const loadedToolComponents = new Map<string, Promise<Component | undefined>>()
