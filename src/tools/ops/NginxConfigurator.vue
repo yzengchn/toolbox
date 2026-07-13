@@ -313,7 +313,6 @@ import {
   NGINX_SNIPPETS,
   NGINX_TEMPLATES,
   PROXY_PASS_SLASH_DEMOS,
-  SAMPLE_NGINX,
   validateNginxConfig,
   type LocationMatchResult,
   type NginxIssue,

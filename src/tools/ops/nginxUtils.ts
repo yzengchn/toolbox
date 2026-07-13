@@ -608,8 +608,8 @@ export function formatNginxConfig(source: string): string {
   for (const raw of lines) {
     // 统计本行有效括号（忽略注释与引号）
     let code = ''
-    let lineInD = inDQuote
-    let lineInS = inSQuote
+    let lineInD: boolean = inDQuote
+    let lineInS: boolean = inSQuote
     for (let j = 0; j < raw.length; j++) {
       const ch = raw[j]
       const prev = j > 0 ? raw[j - 1] : ''
