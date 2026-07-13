@@ -1,6 +1,6 @@
 import type { Component } from 'vue'
 
-export type ToolCategory = 'encoding' | 'formatter' | 'time' | 'utilities' | 'vehicle-iot' | 'network' | 'connection' | 'file'
+export type ToolCategory = 'encoding' | 'formatter' | 'time' | 'utilities' | 'vehicle-iot' | 'network' | 'connection' | 'file' | 'ops'
 
 export interface ToolInfo {
   id: string

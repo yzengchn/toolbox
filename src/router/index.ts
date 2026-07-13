@@ -12,6 +12,12 @@ const routes: RouteRecordRaw[] = [
     redirect: '/'
   },
   {
+    path: '/category/:categoryId',
+    component: () => import('@/views/CategoryView.vue'),
+    name: 'category',
+    props: true
+  },
+  {
     path: '/tool/:toolId',
     component: () => import('@/views/ToolView.vue'),
     name: 'tool',

@@ -4,7 +4,16 @@ import { ref } from 'vue'
 const favoritesStorageKey = 'toolbox:favorites'
 const searchHistoryStorageKey = 'toolbox:search-history'
 const recentToolsStorageKey = 'toolbox:recent-tools'
+const sidebarWidthStorageKey = 'toolbox:sidebar-width'
 const storedToolListLimit = 3
+
+/** 侧边栏默认 / 折叠 / 最小 / 最大宽度（px）
+ * 最小宽度与折叠态一致，允许拖到折叠效果位置
+ */
+export const SIDEBAR_DEFAULT_WIDTH = 248
+export const SIDEBAR_COLLAPSED_WIDTH = 72
+export const SIDEBAR_MIN_WIDTH = SIDEBAR_COLLAPSED_WIDTH
+export const SIDEBAR_MAX_WIDTH = 480
 
 const loadFavorites = (): string[] => {
   try {
@@ -69,18 +78,51 @@ const saveToolIds = (storageKey: string, toolIds: string[]) => {
   }
 }
 
+const clampSidebarWidth = (width: number): number => {
+  if (!Number.isFinite(width)) return SIDEBAR_DEFAULT_WIDTH
+  return Math.min(SIDEBAR_MAX_WIDTH, Math.max(SIDEBAR_MIN_WIDTH, Math.round(width)))
+}
+
+const readStoredNumber = (key: string, fallback: number): number => {
+  try {
+    const stored = localStorage.getItem(key)
+    if (stored == null) return fallback
+    return clampSidebarWidth(Number(stored))
+  } catch {
+    return fallback
+  }
+}
+
+const writeStoredNumber = (key: string, value: number) => {
+  try {
+    localStorage.setItem(key, String(value))
+  } catch (err) {
+    console.error('Save sidebar width failed:', err)
+  }
+}
+
 export const useAppStore = defineStore('app', () => {
   const sidebarCollapsed = ref(false)
+  const sidebarWidth = ref(readStoredNumber(sidebarWidthStorageKey, SIDEBAR_DEFAULT_WIDTH))
   const recentTools = ref<string[]>(loadToolIds(recentToolsStorageKey))
   const favorites = ref<string[]>(loadFavorites())
   const searchHistory = ref<string[]>(loadToolIds(searchHistoryStorageKey))
 
-  const toggleSidebar = () => {
-    sidebarCollapsed.value = !sidebarCollapsed.value
-  }
-
   const setSidebarCollapsed = (collapsed: boolean) => {
     sidebarCollapsed.value = collapsed
+  }
+
+  const setSidebarWidth = (width: number) => {
+    const next = clampSidebarWidth(width)
+    if (next === sidebarWidth.value) return
+    sidebarWidth.value = next
+    writeStoredNumber(sidebarWidthStorageKey, next)
+  }
+
+  /** 折叠按钮：展开时恢复默认宽度，与拖动记忆解耦 */
+  const toggleSidebar = () => {
+    if (sidebarCollapsed.value) setSidebarWidth(SIDEBAR_DEFAULT_WIDTH)
+    sidebarCollapsed.value = !sidebarCollapsed.value
   }
 
   const addRecentTool = (toolId: string) => {
@@ -119,11 +161,13 @@ export const useAppStore = defineStore('app', () => {
 
   return {
     sidebarCollapsed,
+    sidebarWidth,
     recentTools,
     favorites,
     searchHistory,
     toggleSidebar,
     setSidebarCollapsed,
+    setSidebarWidth,
     addRecentTool,
     addSearchHistory,
     toggleFavorite,

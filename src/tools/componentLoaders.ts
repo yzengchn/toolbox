@@ -43,7 +43,8 @@ const toolComponentLoaders: Record<string, ToolComponentLoader> = {
   'mqtt-client': () => import('./connection/MqttClient.vue'),
   'text-diff': () => import('./file/TextCompare.vue'),
   'file-dedup': () => import('./file/FileDedup.vue'),
-  'tree-generator': () => import('./file/TreeGenerator.vue')
+  'tree-generator': () => import('./file/TreeGenerator.vue'),
+  'nginx-configurator': () => import('./ops/NginxConfigurator.vue')
 }
 
 const loadedToolComponents = new Map<string, Promise<Component | undefined>>()

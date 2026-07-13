@@ -1,7 +1,8 @@
 <template>
   <aside
     class="app-sidebar"
-    :class="{ collapsed: appStore.sidebarCollapsed }"
+    :class="{ collapsed: appStore.sidebarCollapsed, resizing: isResizing }"
+    :style="sidebarStyle"
   >
     <div class="sidebar-content">
       <div class="sidebar-scroll">
@@ -13,10 +14,36 @@
             :style="{ '--category-color': category.color }"
           >
             <div class="category-title">
-              <span class="category-title__mark"></span>
-              <span class="category-title__text">{{ category.name }}</span>
+              <router-link
+                :to="`/category/${category.id}`"
+                class="category-link"
+                :class="{ active: isActiveCategory(category.id) }"
+                :title="`${category.name}分类`"
+                @click="closeSidebarOnMobile"
+              >
+                <span class="category-title__mark"></span>
+                <span class="category-title__text">{{ category.name }}</span>
+              </router-link>
+              <button
+                type="button"
+                class="category-toggle"
+                :aria-controls="`category-tools-${category.id}`"
+                :aria-expanded="!isCategoryCollapsed(category.id)"
+                :aria-label="isCategoryCollapsed(category.id) ? `展开${category.name}` : `折叠${category.name}`"
+                @click.stop="toggleCategory(category.id)"
+              >
+                <span
+                  class="category-toggle__icon"
+                  :class="{ collapsed: isCategoryCollapsed(category.id) }"
+                  aria-hidden="true"
+                ></span>
+              </button>
             </div>
-            <div class="category-tools">
+            <div
+              v-show="!isCategoryCollapsed(category.id)"
+              :id="`category-tools-${category.id}`"
+              class="category-tools"
+            >
               <router-link
                 v-for="tool in category.tools"
                 :key="tool.id"
@@ -27,7 +54,7 @@
                 @mouseenter="prefetchToolPage(tool.id)"
                 @focus="prefetchToolPage(tool.id)"
                 @pointerdown="prefetchToolPage(tool.id)"
-                @click="handleToolClick"
+                @click="closeSidebarOnMobile"
               >
                 <span class="tool-icon">{{ tool.name.charAt(0) }}</span>
                 <span class="tool-name">{{ tool.name }}</span>
@@ -35,34 +62,78 @@
             </div>
           </div>
 
-          <!-- 当没有工具时显示提示 -->
           <div v-if="allTools.length === 0" class="empty-tips">
             <p>工具开发中...</p>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- 桌面端拖动手柄：折叠/展开均可拖 -->
+    <div
+      class="sidebar-resizer"
+      role="separator"
+      aria-orientation="vertical"
+      aria-label="拖动调整侧边栏宽度"
+      :aria-valuenow="displayWidth"
+      :aria-valuemin="SIDEBAR_COLLAPSED_WIDTH"
+      :aria-valuemax="SIDEBAR_MAX_WIDTH"
+      tabindex="0"
+      @pointerdown="onResizeStart"
+      @keydown="onResizeKeydown"
+    ></div>
   </aside>
 </template>
 
 <script setup lang="ts">
+import { computed, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import { useAppStore } from '@/stores/app'
+import { useSidebarResize } from '@/composables/useSidebarResize'
 import { toolCategories, allTools, getToolCategoryColor } from '@/tools/catalog'
 import { prefetchToolPage } from '@/tools/prefetch'
+import type { ToolCategory } from '@/types'
 
 const appStore = useAppStore()
-
+const route = useRoute()
 const mobileQuery = window.matchMedia('(max-width: 860px)')
+/** 侧栏内各分类折叠状态（仅本会话，不持久化） */
+const collapsedCategoryIds = ref(new Set<ToolCategory>())
+
+const {
+  isResizing,
+  displayWidth,
+  sidebarStyle,
+  onResizeStart,
+  onResizeKeydown,
+  SIDEBAR_COLLAPSED_WIDTH,
+  SIDEBAR_MAX_WIDTH
+} = useSidebarResize(() => mobileQuery.matches)
 
 const sidebarCategories = toolCategories.map(category => ({
   ...category,
   color: getToolCategoryColor(category.id)
 }))
 
-const handleToolClick = () => {
-  if (mobileQuery.matches) {
-    appStore.setSidebarCollapsed(true)
-  }
+const activeCategoryId = computed(() => {
+  if (route.name !== 'category') return undefined
+  const { categoryId } = route.params
+  return Array.isArray(categoryId) ? categoryId[0] : categoryId
+})
+
+const isActiveCategory = (categoryId: ToolCategory) => activeCategoryId.value === categoryId
+const isCategoryCollapsed = (categoryId: ToolCategory) => collapsedCategoryIds.value.has(categoryId)
+
+const toggleCategory = (categoryId: ToolCategory) => {
+  const next = new Set(collapsedCategoryIds.value)
+  if (next.has(categoryId)) next.delete(categoryId)
+  else next.add(categoryId)
+  collapsedCategoryIds.value = next
+}
+
+/** 移动端点分类/工具后收起抽屉 */
+const closeSidebarOnMobile = () => {
+  if (mobileQuery.matches) appStore.setSidebarCollapsed(true)
 }
 </script>
 
@@ -84,6 +155,11 @@ const handleToolClick = () => {
 
 .app-sidebar.collapsed {
   width: var(--sidebar-collapsed-width);
+}
+
+/* 拖动中关掉 width 过渡，避免跟手延迟 */
+.app-sidebar.resizing {
+  transition: none;
 }
 
 .sidebar-content {
@@ -117,51 +193,6 @@ const handleToolClick = () => {
   background-clip: content-box;
 }
 
-.sidebar-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-md);
-  min-height: 56px;
-  margin: 0 var(--spacing-md) var(--spacing-md);
-  padding: var(--spacing-md);
-  border: 1px solid color-mix(in srgb, var(--color-sidebar-border) 76%, transparent);
-  border-radius: var(--radius-md);
-  background: var(--color-sidebar-surface);
-}
-
-.sidebar-eyebrow {
-  margin: 0 0 2px;
-  color: var(--color-sidebar-muted);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  line-height: 1;
-  text-transform: uppercase;
-}
-
-.sidebar-head h2 {
-  margin: 0;
-  color: var(--color-sidebar-text);
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-  line-height: 1.25;
-}
-
-.tool-count {
-  flex: 0 0 auto;
-  min-width: 28px;
-  height: 28px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--color-sidebar-active) 14%, transparent);
-  color: var(--color-sidebar-active);
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-}
-
 .tools-list {
   padding: 0 var(--spacing-md) var(--spacing-md);
 }
@@ -173,13 +204,84 @@ const handleToolClick = () => {
 .category-title {
   display: flex;
   align-items: center;
+  gap: 4px;
+  margin-bottom: var(--spacing-xs);
+}
+
+.category-link {
+  flex: 1;
+  min-width: 0;
+  min-height: 28px;
+  display: flex;
+  align-items: center;
   gap: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--color-sidebar-muted);
+  text-decoration: none;
+  text-transform: uppercase;
   font-size: var(--font-size-xs);
   font-weight: 500;
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.category-link:hover,
+.category-link.active {
+  color: var(--color-sidebar-text);
+  background: var(--color-sidebar-hover);
+  border-color: var(--color-sidebar-border);
+}
+
+.category-link.active .category-title__mark {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--category-color) 20%, transparent);
+}
+
+.category-toggle {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
   color: var(--color-sidebar-muted);
-  text-transform: uppercase;
-  padding: var(--spacing-xs) var(--spacing-sm);
-  margin-bottom: var(--spacing-xs);
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.category-toggle:hover,
+.category-toggle:focus-visible {
+  color: var(--color-sidebar-text);
+  background: var(--color-sidebar-hover);
+  border-color: var(--color-sidebar-border);
+}
+
+.category-toggle:focus-visible {
+  outline: none;
+}
+
+.category-toggle__icon {
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg) translate(-1px, -1px);
+  transform-origin: center;
+  transition: transform var(--transition-fast);
+}
+
+.category-toggle__icon.collapsed {
+  transform: rotate(-45deg);
 }
 
 .category-title__mark {
@@ -290,20 +392,7 @@ const handleToolClick = () => {
   font-size: var(--font-size-sm);
 }
 
-.collapsed .sidebar-head {
-  justify-content: center;
-  padding: var(--spacing-sm);
-}
-
-.collapsed .sidebar-head > div,
-.collapsed .tool-count {
-  display: none;
-}
-
-.collapsed .category-title {
-  display: none;
-}
-
+.collapsed .category-title,
 .collapsed .tool-name {
   display: none;
 }
@@ -326,6 +415,45 @@ const handleToolClick = () => {
   width: 0;
 }
 
+/* 右侧拖动手柄：默认细线，hover/active 时加粗高亮 */
+.sidebar-resizer {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  width: 6px;
+  height: 100%;
+  z-index: 20;
+  cursor: col-resize;
+  touch-action: none;
+  background: transparent;
+}
+
+.sidebar-resizer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  transition:
+    background-color var(--transition-fast),
+    width var(--transition-fast);
+}
+
+.sidebar-resizer:hover::after,
+.sidebar-resizer:focus-visible::after,
+.app-sidebar.resizing .sidebar-resizer::after {
+  width: 3px;
+  background: var(--color-sidebar-active, var(--color-primary));
+}
+
+.sidebar-resizer:focus-visible {
+  outline: none;
+}
+
 @media (max-width: 860px) {
   .app-sidebar,
   .app-sidebar.collapsed {
@@ -342,6 +470,10 @@ const handleToolClick = () => {
 
   .app-sidebar:not(.collapsed) {
     transform: translateX(0);
+  }
+
+  .sidebar-resizer {
+    display: none;
   }
 }
 </style>

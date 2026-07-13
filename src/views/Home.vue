@@ -32,12 +32,9 @@
           <router-link
             v-for="category in populatedCategories"
             :key="category.id"
-            :to="category.tools[0]?.path || '/'"
+            :to="`/category/${category.id}`"
             class="category-card"
             :style="{ '--category-color': category.color }"
-            @mouseenter="prefetchToolPage(category.tools[0]?.id)"
-            @focus="prefetchToolPage(category.tools[0]?.id)"
-            @pointerdown="prefetchToolPage(category.tools[0]?.id)"
           >
             <span class="category-mark" aria-hidden="true"></span>
             <span class="category-copy">
@@ -78,8 +75,7 @@
 
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import type { ToolInfo } from '@/types'
-import { allTools, getToolCategoryColor, toolCategories } from '@/tools/catalog'
+import { allTools, getToolCategoryColor, getToolsByIds, toolCategories } from '@/tools/catalog'
 import { prefetchToolPage } from '@/tools/prefetch'
 
 const populatedCategories = toolCategories
@@ -89,8 +85,7 @@ const populatedCategories = toolCategories
     color: getToolCategoryColor(category.id)
   }))
 
-const featuredToolLimit = 9
-const featuredToolIds = [
+const featuredTools = getToolsByIds([
   'json-formatter',
   'base64-encoder',
   'jwt-decoder',
@@ -100,12 +95,7 @@ const featuredToolIds = [
   'regex-tester',
   'geohash-tool',
   'qrcode-generator'
-]
-const toolsById = new Map(allTools.map(tool => [tool.id, tool]))
-const featuredTools = featuredToolIds
-  .map(toolId => toolsById.get(toolId))
-  .filter((tool): tool is ToolInfo => Boolean(tool))
-  .slice(0, featuredToolLimit)
+]).slice(0, 9)
 
 const updateHomeSeo = async () => {
   const { setSeo, siteConfig } = await import('@/utils/seo')

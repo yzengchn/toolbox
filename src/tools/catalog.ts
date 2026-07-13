@@ -360,6 +360,32 @@ export const allTools: ToolInfo[] = [
     category: 'file',
     keywords: ['tree', '目录', '树形', '目录结构', 'tree', 'generate', 'file tree', 'project structure', 'README', '生成器'],
     path: '/tool/tree-generator'
+  },
+  {
+    id: 'nginx-configurator',
+    name: 'Nginx 配置器',
+    description: '结构/安全校验、location 请求模拟、场景模板与 proxy_pass 等常用片段说明',
+    icon: 'mdi:server-network',
+    category: 'ops',
+    keywords: [
+      'nginx',
+      'location',
+      'proxy_pass',
+      '反向代理',
+      '配置',
+      '校验',
+      '匹配',
+      '模拟',
+      '请求',
+      '安全',
+      '模板',
+      'server',
+      'upstream',
+      'rewrite',
+      'ssl',
+      '运维'
+    ],
+    path: '/tool/nginx-configurator'
   }
 ]
 
@@ -403,6 +429,11 @@ const categoryMeta: Array<Omit<ToolCategoryInfo, 'tools'>> = [
     id: 'file',
     name: '文件工具',
     icon: 'mdi:folder-multiple-outline'
+  },
+  {
+    id: 'ops',
+    name: '运维工具',
+    icon: 'mdi:server-outline'
   }
 ]
 
@@ -414,7 +445,8 @@ export const toolCategoryColors: Record<ToolCategory, string> = {
   network: '#fb7185',
   'vehicle-iot': '#22d3ee',
   connection: '#f97316',
-  file: '#34d399'
+  file: '#34d399',
+  ops: '#94a3b8'
 }
 
 const toolsByCategory = allTools.reduce((result, tool) => {
@@ -436,6 +468,7 @@ export const toolCategories: ToolCategoryInfo[] = categoryMeta.map(category => (
 
 const toolsById = new Map(allTools.map(tool => [tool.id, tool]))
 const toolsByPath = new Map(allTools.map(tool => [tool.path, tool]))
+const categoriesById = new Map(toolCategories.map(category => [category.id, category]))
 const categoryNamesById = new Map(categoryMeta.map(category => [category.id, category.name]))
 
 export function getToolById(id: string): ToolInfo | undefined {
@@ -450,6 +483,10 @@ export function getToolsByIds(ids: readonly string[]): ToolInfo[] {
   return ids
     .map(id => toolsById.get(id))
     .filter((tool): tool is ToolInfo => tool !== undefined)
+}
+
+export function getToolCategoryById(id: string): ToolCategoryInfo | undefined {
+  return categoriesById.get(id as ToolCategory)
 }
 
 export function getToolCategoryName(category: ToolCategory): string {
