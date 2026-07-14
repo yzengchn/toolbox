@@ -6,31 +6,6 @@
     />
 
     <div class="tool-content">
-      <!-- 概览条 -->
-      <div class="overview-bar">
-        <n-tag size="small" :bordered="false">server {{ overview.servers }}</n-tag>
-        <n-tag size="small" :bordered="false">location {{ overview.locations }}</n-tag>
-        <n-tag size="small" :bordered="false">upstream {{ overview.upstreams }}</n-tag>
-        <n-tag size="small" :bordered="false">proxy {{ overview.proxyLocations }}</n-tag>
-        <n-tag size="small" :type="overview.hasSsl ? 'success' : 'default'" :bordered="false">
-          SSL {{ overview.hasSsl ? '有' : '无' }}
-        </n-tag>
-        <n-tag size="small" :type="overview.hasGzip ? 'success' : 'default'" :bordered="false">
-          Gzip {{ overview.hasGzip ? '有' : '无' }}
-        </n-tag>
-        <n-tag
-          size="small"
-          :type="overview.hasSecurityHeaders ? 'success' : 'default'"
-          :bordered="false"
-        >
-          安全头 {{ overview.hasSecurityHeaders ? '有' : '无' }}
-        </n-tag>
-        <n-tag size="small" :type="overview.hasRateLimit ? 'success' : 'default'" :bordered="false">
-          限流 {{ overview.hasRateLimit ? '有' : '无' }}
-        </n-tag>
-      </div>
-
-      <!-- 模板快捷入口 -->
       <n-card size="small" class="template-card" title="场景模板">
         <div class="template-row">
           <button
@@ -76,15 +51,15 @@
 
           <div class="result-bar">
             <template v-if="validated">
-              <n-tag v-if="errorCount === 0 && warningCount === 0 && infoCount === 0" type="success" size="small">
-                未发现明显问题
-              </n-tag>
+              <n-tag v-if="!hasAnyIssue" type="success" size="small">未发现明显问题</n-tag>
               <n-tag v-if="errorCount > 0" type="error" size="small">{{ errorCount }} 错误</n-tag>
-              <n-tag v-if="warningCount > 0" type="warning" size="small">{{ warningCount }} 警告</n-tag>
+              <n-tag v-if="warningCount > 0" type="warning" size="small">
+                {{ warningCount }} 警告
+              </n-tag>
               <n-tag v-if="infoCount > 0" type="info" size="small">{{ infoCount }} 建议</n-tag>
               <n-space :size="4">
                 <n-button
-                  v-for="cat in issueFilterOptions"
+                  v-for="cat in ISSUE_FILTER_OPTIONS"
                   :key="cat.value"
                   size="tiny"
                   :type="issueFilter === cat.value ? 'primary' : 'default'"
@@ -96,13 +71,15 @@
               </n-space>
               <span class="result-hint">静态检查，不能替代服务器上的 nginx -t</span>
             </template>
-            <span v-else class="result-hint">编辑后点击「校验」，或 Ctrl/⌘ + Enter · 含语法/安全/实践</span>
+            <span v-else class="result-hint">
+              编辑后点击「校验」，或 Ctrl/⌘ + Enter · 含语法/安全/实践
+            </span>
           </div>
 
           <ul v-if="validated && filteredIssues.length" class="issue-list">
             <li
               v-for="(issue, idx) in filteredIssues"
-              :key="`${issue.line}-${idx}`"
+              :key="`${issue.line}-${issue.category}-${idx}`"
               class="issue-item"
               :class="`is-${issue.severity}`"
             >
@@ -125,146 +102,163 @@
             </n-space>
           </template>
 
-          <div class="sim-custom">
-            <n-input
-              v-model:value="customPath"
-              class="sim-path-input"
-              placeholder="输入完整请求路径，如 /api/users?id=1 或 https://example.com/api/"
-              clearable
-              @keydown.enter="runCustomMatch"
-            >
-              <template #prefix>
-                <span class="sim-method">GET</span>
-              </template>
-            </n-input>
-            <n-button type="primary" size="small" :disabled="!customPath.trim()" @click="runCustomMatch">
-              匹配
-            </n-button>
-          </div>
+          <div class="sim-grid">
+            <div class="sim-main">
+              <div class="sim-custom">
+                <n-input
+                  v-model:value="customPath"
+                  class="sim-path-input"
+                  placeholder="输入完整请求路径，如 /api/users?id=1 或 https://example.com/api/"
+                  clearable
+                  @keydown.enter="runCustomMatch"
+                >
+                  <template #prefix>
+                    <span class="sim-method">GET</span>
+                  </template>
+                </n-input>
+                <n-button
+                  type="primary"
+                  size="small"
+                  :disabled="!customPath.trim()"
+                  @click="runCustomMatch"
+                >
+                  匹配
+                </n-button>
+              </div>
 
-          <div v-if="customResult" class="sim-detail" :class="customResult.matched ? 'is-hit' : 'is-miss'">
-            <div class="sim-detail-head">
-              <span class="sim-uri mono">{{ customResult.uri }}</span>
-              <n-tag :type="customResult.matched ? 'success' : 'warning'" size="small">
-                {{ customResult.matched ? '已匹配' : '未匹配' }}
-              </n-tag>
-            </div>
-            <p v-if="customResult.matched" class="sim-hit-line">
-              <span class="label">命中</span>
-              <code>L{{ customResult.matched.line }}</code>
-              <code class="loc-raw">{{ customResult.matched.raw }}</code>
-            </p>
-            <p class="sim-reason">{{ customResult.reason }}</p>
-            <p v-if="customResult.upstreamTarget" class="sim-upstream">
-              <span class="label">proxy_pass</span>
-              <code class="mono">{{ customResult.matched?.proxyPass }}</code>
-              <span class="arrow">→</span>
-              <code class="mono">{{ customResult.upstreamTarget }}</code>
-            </p>
-            <ul v-if="customResult.steps.length" class="sim-steps">
-              <li
-                v-for="(step, i) in customResult.steps"
-                :key="i"
-                :class="{ hit: step.matched }"
+              <div
+                v-if="customResult"
+                class="sim-detail"
+                :class="customResult.matched ? 'is-hit' : 'is-miss'"
               >
-                <span class="step-role">{{ stepRoleLabel(step.role) }}</span>
-                <code class="mono">{{ step.location.raw }}</code>
-                <span class="step-note">{{ step.note }}</span>
-              </li>
-            </ul>
-          </div>
-
-          <!-- proxy_pass 尾 / 对照 -->
-          <div class="slash-demo">
-            <p class="sim-section-title">
-              <span>proxy_pass 尾 / 对照</span>
-              <span class="result-hint">最常见踩坑</span>
-            </p>
-            <div class="slash-table">
-              <div v-for="demo in PROXY_PASS_SLASH_DEMOS" :key="demo.location" class="slash-block">
-                <div class="slash-loc mono">location {{ demo.location }}</div>
-                <div class="slash-row is-good">
-                  <span class="slash-flag">带 /</span>
-                  <code class="mono">{{ demo.withSlash.proxyPass }}</code>
-                  <span class="slash-result">{{ demo.withSlash.result }}</span>
+                <div class="sim-detail-head">
+                  <span class="sim-uri mono">{{ customResult.uri }}</span>
+                  <n-tag :type="customResult.matched ? 'success' : 'warning'" size="small">
+                    {{ customResult.matched ? '已匹配' : '未匹配' }}
+                  </n-tag>
                 </div>
-                <div class="slash-row">
-                  <span class="slash-flag">不带</span>
-                  <code class="mono">{{ demo.withoutSlash.proxyPass }}</code>
-                  <span class="slash-result">{{ demo.withoutSlash.result }}</span>
+                <p v-if="customResult.matched" class="sim-hit-line">
+                  <span class="label">命中</span>
+                  <code>L{{ customResult.matched.line }}</code>
+                  <code class="loc-raw">{{ customResult.matched.raw }}</code>
+                </p>
+                <p class="sim-reason">{{ customResult.reason }}</p>
+                <p v-if="customResult.upstreamTarget" class="sim-upstream">
+                  <span class="label">proxy_pass</span>
+                  <code class="mono">{{ customResult.matched?.proxyPass }}</code>
+                  <span class="arrow">→</span>
+                  <code class="mono">{{ customResult.upstreamTarget }}</code>
+                </p>
+                <ul v-if="customResult.steps.length" class="sim-steps">
+                  <li
+                    v-for="(step, i) in customResult.steps"
+                    :key="i"
+                    :class="{ hit: step.matched }"
+                  >
+                    <span class="step-role">{{ stepRoleLabel(step.role) }}</span>
+                    <code class="mono">{{ step.location.raw }}</code>
+                    <span class="step-note">{{ step.note }}</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div class="slash-demo">
+                <p class="sim-section-title">
+                  <span>proxy_pass 尾 / 对照</span>
+                  <span class="result-hint">最常见踩坑</span>
+                </p>
+                <div class="slash-table">
+                  <div
+                    v-for="demo in PROXY_PASS_SLASH_DEMOS"
+                    :key="demo.location"
+                    class="slash-block"
+                  >
+                    <div class="slash-loc mono">location {{ demo.location }}</div>
+                    <div class="slash-row is-good">
+                      <span class="slash-flag">带 /</span>
+                      <code class="mono">{{ demo.withSlash.proxyPass }}</code>
+                      <span class="slash-result">{{ demo.withSlash.result }}</span>
+                    </div>
+                    <div class="slash-row">
+                      <span class="slash-flag">不带</span>
+                      <code class="mono">{{ demo.withoutSlash.proxyPass }}</code>
+                      <span class="slash-result">{{ demo.withoutSlash.result }}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div class="sim-section-title">
-            <span>预设请求</span>
-            <span class="result-hint">点击一行可填入上方并查看详情</span>
+            <div class="sim-presets">
+              <p class="sim-section-title">
+                <span>预设请求</span>
+                <span class="result-hint">点击一行可填入并查看详情</span>
+              </p>
+              <div class="preset-list">
+                <button
+                  v-for="item in allPresetResults"
+                  :key="item.uri"
+                  type="button"
+                  class="preset-row"
+                  :class="{
+                    'is-hit': !!item.matched,
+                    'is-miss': !item.matched,
+                    active: customResult?.uri === item.uri
+                  }"
+                  :title="item.matched ? `命中 ${item.matched.raw}` : '无匹配'"
+                  @click="selectPreset(item.uri)"
+                >
+                  <span class="preset-uri mono">{{ item.uri }}</span>
+                </button>
+              </div>
+            </div>
           </div>
-
-          <div class="preset-list">
-            <button
-              v-for="item in allPresetResults"
-              :key="item.uri"
-              type="button"
-              class="preset-row"
-              :class="{
-                'is-hit': !!item.matched,
-                'is-miss': !item.matched,
-                active: customResult?.uri === item.uri
-              }"
-              @click="selectPreset(item.uri)"
-            >
-              <span class="preset-uri mono">{{ item.uri }}</span>
-              <span v-if="item.matched" class="preset-loc mono" :title="item.matched.raw">
-                L{{ item.matched.line }} · {{ item.matched.raw }}
-              </span>
-              <span v-else class="preset-loc is-empty">无匹配</span>
-              <span v-if="item.upstreamUri" class="preset-up mono" :title="item.upstreamTarget">
-                → {{ item.upstreamUri }}
-              </span>
-            </button>
-          </div>
-
-          <div v-if="parsedLocations.length" class="loc-panel">
-            <p class="sim-section-title">已解析 location</p>
-            <ul class="loc-list">
-              <li v-for="loc in parsedLocations" :key="`${loc.line}-${loc.raw}`" class="loc-item">
-                <code class="loc-line">L{{ loc.line }}</code>
-                <code class="loc-raw mono">{{ loc.raw }}</code>
-                <span v-if="loc.proxyPass" class="loc-meta mono">proxy_pass {{ loc.proxyPass }}</span>
-                <span v-else-if="loc.root" class="loc-meta mono">root {{ loc.root }}</span>
-                <span v-else-if="loc.returnDirective" class="loc-meta mono">
-                  return {{ loc.returnDirective }}
-                </span>
-                <span v-else-if="loc.tryFiles" class="loc-meta mono">try_files …</span>
-              </li>
-            </ul>
-          </div>
-          <p v-else class="empty-loc result-hint">
-            当前配置未解析到 location，请编写或加载示例后再模拟
-          </p>
         </n-card>
       </div>
 
       <n-card title="常用配置说明" class="snippets-card">
         <div class="snippet-layout">
           <div class="snippet-nav" role="tablist" aria-label="配置片段列表">
-            <button
-              v-for="item in NGINX_SNIPPETS"
-              :key="item.id"
-              type="button"
-              class="snippet-nav-item"
-              :class="{ active: activeSnippetId === item.id }"
-              role="tab"
-              :aria-selected="activeSnippetId === item.id"
-              @click="activeSnippetId = item.id"
-            >
-              <span class="snippet-nav-title">{{ item.title }}</span>
-              <span class="snippet-nav-tags">
-                <span v-for="tag in item.tags" :key="tag" class="tag-pill">{{ tag }}</span>
-              </span>
-            </button>
+            <div class="snippet-filter-bar">
+              <n-input
+                v-model:value="snippetSearchText"
+                placeholder="搜索片段..."
+                clearable
+                size="small"
+                class="snippet-search"
+              />
+              <div class="snippet-group-chips">
+                <button
+                  v-for="g in SNIPPET_GROUPS"
+                  :key="g.key"
+                  type="button"
+                  class="group-chip"
+                  :class="{ active: snippetGroupFilter === g.key }"
+                  @click="snippetGroupFilter = g.key"
+                >
+                  {{ g.label }}
+                </button>
+              </div>
+            </div>
+
+            <div v-if="filteredSnippets.length" class="snippet-nav-list">
+              <button
+                v-for="item in filteredSnippets"
+                :key="item.id"
+                type="button"
+                class="snippet-nav-item"
+                :class="{ active: activeSnippetId === item.id }"
+                role="tab"
+                :aria-selected="activeSnippetId === item.id"
+                @click="activeSnippetId = item.id"
+              >
+                <span class="snippet-nav-title">{{ item.title }}</span>
+                <span class="snippet-nav-tags">
+                  <span v-for="tag in item.tags" :key="tag" class="tag-pill">{{ tag }}</span>
+                </span>
+              </button>
+            </div>
+            <p v-else class="snippet-empty result-hint">无匹配片段</p>
           </div>
 
           <div v-if="activeSnippet" class="snippet-detail" role="tabpanel">
@@ -281,9 +275,7 @@
             </div>
 
             <p class="snippet-desc">{{ activeSnippet.description }}</p>
-
             <pre class="snippet-code">{{ activeSnippet.example }}</pre>
-
             <div class="snippet-notes">
               <p class="snippet-notes-title">要点</p>
               <ul>
@@ -307,30 +299,77 @@ import {
   DEFAULT_SIMULATE_PATHS,
   extractLocations,
   formatNginxConfig,
-  getNginxOverview,
   matchLocation,
   matchMany,
   NGINX_SNIPPETS,
   NGINX_TEMPLATES,
   PROXY_PASS_SLASH_DEMOS,
+  SNIPPET_GROUPS,
   validateNginxConfig,
   type LocationMatchResult,
+  type LocationMatchStep,
   type NginxIssue,
   type NginxIssueCategory,
   type NginxTemplate
 } from './nginxUtils'
 
+const DEFAULT_SIM_PATH = '/api/users'
+
+const ISSUE_FILTER_OPTIONS: Array<{ value: 'all' | NginxIssueCategory; label: string }> = [
+  { value: 'all', label: '全部' },
+  { value: 'syntax', label: '语法' },
+  { value: 'security', label: '安全' },
+  { value: 'practice', label: '实践' }
+]
+
+const CATEGORY_LABEL: Record<NginxIssueCategory, string> = {
+  syntax: '语法',
+  security: '安全',
+  practice: '实践'
+}
+
+const CATEGORY_TAG_TYPE: Record<NginxIssueCategory, 'error' | 'warning' | 'info'> = {
+  security: 'error',
+  practice: 'info',
+  syntax: 'warning'
+}
+
+const STEP_ROLE_LABEL: Record<LocationMatchStep['role'], string> = {
+  exact: '=',
+  prefer: '^~',
+  prefix: '前缀',
+  regex: '正则',
+  fallback: '回退'
+}
+
 const message = useMessage()
 const { copy } = useClipboard()
 
 const { data: inputText } = useStorage('nginx-configurator-input', '')
-const { data: customPath } = useStorage('nginx-configurator-sim-path', '/api/users')
+const { data: customPath } = useStorage('nginx-configurator-sim-path', DEFAULT_SIM_PATH)
+
 const activeSnippetId = ref(NGINX_SNIPPETS[0]?.id ?? '')
 const activeTemplateId = ref('')
+const snippetGroupFilter = ref('all')
+const snippetSearchText = ref('')
 const issues = ref<NginxIssue[]>([])
 const validated = ref(false)
 const customResult = ref<LocationMatchResult | null>(null)
 const issueFilter = ref<'all' | NginxIssueCategory>('all')
+
+const filteredSnippets = computed(() => {
+  const search = snippetSearchText.value.trim().toLowerCase()
+  const group = snippetGroupFilter.value
+  return NGINX_SNIPPETS.filter(s => {
+    if (group !== 'all' && s.group !== group) return false
+    if (!search) return true
+    return (
+      s.title.toLowerCase().includes(search) ||
+      s.description.toLowerCase().includes(search) ||
+      s.tags.some(t => t.toLowerCase().includes(search))
+    )
+  })
+})
 
 const activeSnippet = computed(
   () => NGINX_SNIPPETS.find(item => item.id === activeSnippetId.value) ?? NGINX_SNIPPETS[0]
@@ -339,48 +378,62 @@ const activeSnippet = computed(
 const errorCount = computed(() => issues.value.filter(i => i.severity === 'error').length)
 const warningCount = computed(() => issues.value.filter(i => i.severity === 'warning').length)
 const infoCount = computed(() => issues.value.filter(i => i.severity === 'info').length)
+const hasAnyIssue = computed(
+  () => errorCount.value + warningCount.value + infoCount.value > 0
+)
 
-const issueFilterOptions = [
-  { value: 'all' as const, label: '全部' },
-  { value: 'syntax' as const, label: '语法' },
-  { value: 'security' as const, label: '安全' },
-  { value: 'practice' as const, label: '实践' }
-]
-
-const filteredIssues = computed(() => {
-  if (issueFilter.value === 'all') return issues.value
-  return issues.value.filter(i => i.category === issueFilter.value)
-})
+const filteredIssues = computed(() =>
+  issueFilter.value === 'all'
+    ? issues.value
+    : issues.value.filter(i => i.category === issueFilter.value)
+)
 
 const parsedLocations = computed(() => extractLocations(inputText.value))
-const overview = computed(() => getNginxOverview(inputText.value))
 
-/** 默认用例 + 配置中已声明的前缀/精确 location（去重） */
 const allPresetResults = computed(() => {
   const fromConfig = parsedLocations.value
     .filter(l => l.modifier === 'exact' || l.modifier === 'prefix' || l.modifier === 'prefer')
     .map(l => l.pattern)
-  const paths = [...new Set([...DEFAULT_SIMULATE_PATHS, ...fromConfig])]
-  return matchMany(paths, inputText.value)
+  return matchMany([...new Set([...DEFAULT_SIMULATE_PATHS, ...fromConfig])], inputText.value)
 })
 
-const categoryLabel = (c: NginxIssueCategory) => {
-  if (c === 'security') return '安全'
-  if (c === 'practice') return '实践'
-  return '语法'
+const categoryLabel = (c: NginxIssueCategory) => CATEGORY_LABEL[c]
+const categoryTagType = (c: NginxIssueCategory) => CATEGORY_TAG_TYPE[c]
+const stepRoleLabel = (role: LocationMatchStep['role'] | string) =>
+  STEP_ROLE_LABEL[role as LocationMatchStep['role']] ?? role
+
+const clearValidation = () => {
+  validated.value = false
+  issues.value = []
 }
 
-const categoryTagType = (c: NginxIssueCategory): 'error' | 'warning' | 'info' | 'default' => {
-  if (c === 'security') return 'error'
-  if (c === 'practice') return 'info'
-  return 'warning'
+const refreshMatch = (path = customPath.value, source = inputText.value) => {
+  const target = path.trim()
+  customResult.value = target ? matchLocation(target, source) : null
+}
+
+const setConfig = (
+  text: string,
+  options?: { templateId?: string | null; matchPath?: string; clearMatch?: boolean }
+) => {
+  inputText.value = text
+  clearValidation()
+  if (options?.templateId !== undefined) {
+    activeTemplateId.value = options.templateId ?? ''
+  }
+  if (options?.clearMatch) {
+    customResult.value = null
+    return
+  }
+  refreshMatch(options?.matchPath ?? customPath.value, text)
 }
 
 const runValidate = () => {
   issues.value = validateNginxConfig(inputText.value)
   validated.value = true
   issueFilter.value = 'all'
-  if (errorCount.value === 0 && warningCount.value === 0 && infoCount.value === 0) {
+
+  if (!hasAnyIssue.value) {
     message.success('未发现明显问题')
   } else if (errorCount.value > 0) {
     message.warning(
@@ -393,46 +446,24 @@ const runValidate = () => {
   }
 }
 
-const runCustomMatch = () => {
-  const path = customPath.value.trim()
-  if (!path) return
-  customResult.value = matchLocation(path, inputText.value)
-}
+const runCustomMatch = () => refreshMatch()
 
 const selectPreset = (uri: string) => {
   customPath.value = uri
-  customResult.value = matchLocation(uri, inputText.value)
+  refreshMatch(uri)
 }
 
 const resetPresetPaths = () => {
-  customPath.value = '/api/users'
-  customResult.value = matchLocation(customPath.value, inputText.value)
+  customPath.value = DEFAULT_SIM_PATH
+  refreshMatch(DEFAULT_SIM_PATH)
   message.success('已重置模拟路径')
 }
 
-const stepRoleLabel = (role: string) => {
-  switch (role) {
-    case 'exact':
-      return '='
-    case 'prefer':
-      return '^~'
-    case 'prefix':
-      return '前缀'
-    case 'regex':
-      return '正则'
-    case 'fallback':
-      return '回退'
-    default:
-      return role
-  }
-}
-
 const applyTemplate = (tpl: NginxTemplate) => {
-  inputText.value = tpl.content
-  activeTemplateId.value = tpl.id
-  validated.value = false
-  issues.value = []
-  customResult.value = matchLocation(customPath.value || '/api/users', tpl.content)
+  setConfig(tpl.content, {
+    templateId: tpl.id,
+    matchPath: customPath.value || DEFAULT_SIM_PATH
+  })
   message.success(`已加载模板：${tpl.name}`)
 }
 
@@ -448,11 +479,7 @@ const handleFormat = () => {
 }
 
 const handleClear = () => {
-  inputText.value = ''
-  validated.value = false
-  issues.value = []
-  customResult.value = null
-  activeTemplateId.value = ''
+  setConfig('', { templateId: '', clearMatch: true })
 }
 
 const copyConfig = () => {
@@ -465,25 +492,27 @@ const copySnippet = (text: string) => {
 }
 
 const insertSnippet = (text: string) => {
-  const current = inputText.value
-  inputText.value = current.trim()
-    ? `${current.replace(/\s*$/, '')}\n\n${text}\n`
-    : `${text}\n`
-  validated.value = false
-  message.success('已插入到编辑器')
+  setConfig(`${text}\n`)
+  message.success('已清空并插入到编辑器')
 }
 
-// 配置变更：结构校验结果过期；自定义路径重新匹配
+// 筛选后当前片段不在列表里时，自动选中第一个可见项
+watch(
+  filteredSnippets,
+  list => {
+    if (list.length && !list.some(s => s.id === activeSnippetId.value)) {
+      activeSnippetId.value = list[0].id
+    }
+  },
+  { immediate: true }
+)
+
+// 配置变更：校验结果过期，并刷新当前路径匹配
 watch(
   inputText,
   val => {
-    if (validated.value) {
-      validated.value = false
-      issues.value = []
-    }
-    if (customPath.value.trim()) {
-      customResult.value = matchLocation(customPath.value, val)
-    }
+    if (validated.value) clearValidation()
+    refreshMatch(customPath.value, val)
   },
   { immediate: true }
 )
@@ -498,13 +527,6 @@ watch(
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
-}
-
-.overview-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
 }
 
 .template-card :deep(.n-card__content) {
@@ -560,9 +582,70 @@ watch(
 
 .editor-sim-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.95fr);
+  grid-template-columns: minmax(360px, 1fr) minmax(420px, 1.1fr);
   gap: var(--spacing-md);
-  align-items: start;
+  align-items: stretch;
+}
+
+/* 两卡等高：n-card 根节点带 class，内容区 flex + 内部滚动 */
+.editor-sim-grid > .editor-card,
+.editor-sim-grid > .simulate-card {
+  height: 100%;
+  min-height: 0;
+  display: flex !important;
+  flex-direction: column;
+}
+
+.editor-sim-grid > .editor-card :deep(.n-card-header),
+.editor-sim-grid > .simulate-card :deep(.n-card-header) {
+  flex: 0 0 auto;
+}
+
+.editor-sim-grid > .editor-card :deep(.n-card__content),
+.editor-sim-grid > .simulate-card :deep(.n-card__content) {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.editor-card :deep(.n-card__content) > .issue-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+}
+
+.sim-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(120px, 160px);
+  gap: var(--spacing-md);
+  align-items: stretch;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.sim-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.sim-presets {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sim-presets .sim-section-title {
+  flex: 0 0 auto;
 }
 
 .config-input :deep(textarea) {
@@ -592,7 +675,6 @@ watch(
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   overflow: hidden;
-  max-height: 260px;
   overflow-y: auto;
 }
 
@@ -649,7 +731,6 @@ watch(
   line-height: 1.45;
 }
 
-/* ── 请求模拟 ── */
 .sim-custom {
   display: flex;
   gap: 8px;
@@ -737,14 +818,17 @@ watch(
   color: var(--color-text-tertiary);
 }
 
+.sim-detail .loc-raw {
+  color: var(--color-text-primary);
+}
+
 .sim-steps {
   list-style: none;
   margin: 8px 0 0;
-  padding: 0;
-  max-height: 140px;
+  padding: 6px 0 0;
+  max-height: 220px;
   overflow-y: auto;
   border-top: 1px dashed var(--color-border);
-  padding-top: 6px;
 }
 
 .sim-steps li {
@@ -835,14 +919,13 @@ watch(
   display: flex;
   flex-direction: column;
   gap: 4px;
-  max-height: 240px;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
 }
 
 .preset-row {
-  display: grid;
-  grid-template-columns: minmax(100px, 0.9fr) minmax(0, 1.2fr);
-  gap: 2px 10px;
+  display: block;
   width: 100%;
   padding: 8px 10px;
   border: 1px solid transparent;
@@ -876,88 +959,16 @@ watch(
 }
 
 .preset-uri {
+  display: block;
   font-size: var(--font-size-sm);
   font-weight: 500;
   word-break: break-all;
-}
-
-.preset-loc {
-  font-size: 12px;
-  color: var(--color-text-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.preset-loc.is-empty {
-  color: var(--color-text-tertiary);
-}
-
-.preset-up {
-  grid-column: 1 / -1;
-  font-size: 11px;
-  color: var(--color-text-tertiary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.loc-panel {
-  margin-top: 4px;
-}
-
-.loc-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  max-height: 160px;
-  overflow-y: auto;
-}
-
-.loc-item {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 6px 10px;
-  padding: 6px 10px;
-  font-size: 12px;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.loc-item:last-child {
-  border-bottom: none;
-}
-
-.loc-line {
-  font-family: var(--font-mono);
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  min-width: 36px;
-}
-
-.loc-raw {
-  color: var(--color-text-primary);
-}
-
-.loc-meta {
-  color: var(--color-text-tertiary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 100%;
-}
-
-.empty-loc {
-  margin: var(--spacing-sm) 0 0;
 }
 
 .mono {
   font-family: var(--font-mono);
 }
 
-/* ── 片段说明 ── */
 .snippet-layout {
   display: grid;
   grid-template-columns: minmax(200px, 280px) minmax(0, 1fr);
@@ -969,9 +980,63 @@ watch(
   display: flex;
   flex-direction: column;
   gap: 4px;
-  max-height: 520px;
-  overflow-y: auto;
   padding-right: 4px;
+}
+
+.snippet-filter-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.snippet-search :deep(input) {
+  font-size: var(--font-size-sm);
+}
+
+.snippet-group-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.group-chip {
+  padding: 3px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  transition:
+    border-color var(--transition-fast),
+    background-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.group-chip:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+  color: var(--color-text-primary);
+}
+
+.group-chip.active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft, color-mix(in srgb, var(--color-primary) 14%, transparent));
+  color: var(--color-primary);
+}
+
+.snippet-nav-list {
+  max-height: 440px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.snippet-empty {
+  padding: var(--spacing-lg);
+  text-align: center;
 }
 
 .snippet-nav-item {
@@ -1069,7 +1134,7 @@ watch(
   color: var(--color-text-primary);
   white-space: pre;
   overflow: auto;
-  max-height: 280px;
+  max-height: 360px;
 }
 
 .snippet-notes {
@@ -1099,8 +1164,14 @@ watch(
 }
 
 @media (max-width: 1100px) {
-  .editor-sim-grid {
+  .editor-sim-grid,
+  .sim-grid {
     grid-template-columns: 1fr;
+  }
+
+  .editor-sim-grid > .editor-card,
+  .editor-sim-grid > .simulate-card {
+    height: auto;
   }
 }
 
@@ -1123,10 +1194,6 @@ watch(
   .snippet-detail-head {
     flex-direction: column;
     align-items: flex-start;
-  }
-
-  .preset-row {
-    grid-template-columns: 1fr;
   }
 
   .slash-row {

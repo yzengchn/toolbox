@@ -14,6 +14,8 @@ export interface NginxSnippet {
   id: string
   title: string
   tags: string[]
+  /** 分组：basic / security / performance / proxy / advanced / log */
+  group?: string
   description: string
   example: string
   notes: string[]
@@ -24,17 +26,6 @@ export interface NginxTemplate {
   name: string
   description: string
   content: string
-}
-
-export interface NginxOverview {
-  servers: number
-  locations: number
-  upstreams: number
-  hasSsl: boolean
-  hasGzip: boolean
-  hasSecurityHeaders: boolean
-  hasRateLimit: boolean
-  proxyLocations: number
 }
 
 export interface ProxyPassSlashDemo {
@@ -107,6 +98,7 @@ export const NGINX_SNIPPETS: NginxSnippet[] = [
     id: 'location-api',
     title: 'location /api/ 反向代理',
     tags: ['location', 'proxy_pass'],
+    group: 'proxy',
     description:
       '把 /api/ 请求转发到后端。proxy_pass 是否带尾部 / 会改变 URI 替换规则，这是最容易踩坑的点。',
     example: `location /api/ {
@@ -129,6 +121,7 @@ export const NGINX_SNIPPETS: NginxSnippet[] = [
     id: 'location-match',
     title: 'location 匹配优先级',
     tags: ['location'],
+    group: 'basic',
     description: 'Nginx 按固定优先级选择 location，不是“谁写在前面谁优先”。',
     example: `location = /exact { }          # 1. 精确匹配，最高
 location ^~ /static/ { }       # 2. 前缀匹配且不再检查正则
@@ -146,6 +139,7 @@ location / { }                 # 5. 通用前缀，最长匹配获胜`,
     id: 'proxy-headers',
     title: '反向代理常用头',
     tags: ['proxy_pass', 'header'],
+    group: 'proxy',
     description: '后端要拿到真实客户端 IP、协议与 Host，必须显式传转发头。',
     example: `location / {
     proxy_pass http://upstream_app;
@@ -168,6 +162,7 @@ location / { }                 # 5. 通用前缀，最长匹配获胜`,
     id: 'spa-try-files',
     title: 'SPA 前端 try_files',
     tags: ['location', 'try_files'],
+    group: 'basic',
     description: 'Vue/React 等 History 路由需要把不存在的路径回退到 index.html。',
     example: `location / {
     root /var/www/html;
@@ -188,6 +183,7 @@ location /api/ {
     id: 'https-redirect',
     title: 'HTTP → HTTPS 跳转',
     tags: ['server', 'ssl'],
+    group: 'security',
     description: '80 端口只做跳转，443 承载业务；证书路径按实际环境修改。',
     example: `server {
     listen 80;
@@ -212,6 +208,7 @@ server {
     id: 'upstream',
     title: 'upstream 负载与 keepalive',
     tags: ['upstream'],
+    group: 'proxy',
     description: '多实例后端用 upstream 聚合；开启 keepalive 可复用到上游的连接。',
     example: `upstream app_backend {
     server 10.0.0.11:3000 weight=3;
@@ -237,6 +234,7 @@ server {
     id: 'client-body',
     title: '上传大小与超时',
     tags: ['client', 'timeout'],
+    group: 'basic',
     description: '上传大文件、慢接口时需要调 client_max_body_size 与代理超时。',
     example: `http {
     client_max_body_size 50m;
@@ -262,6 +260,7 @@ server {
     id: 'rewrite',
     title: 'rewrite 与 return',
     tags: ['rewrite'],
+    group: 'advanced',
     description: '简单跳转优先 return；复杂路径改写再用 rewrite，并注意 last/break/redirect/permanent。',
     example: `# 推荐：固定跳转
 location = /old {
@@ -283,6 +282,7 @@ location /blog/ {
     id: 'websocket',
     title: 'WebSocket 反代',
     tags: ['websocket', 'proxy_pass'],
+    group: 'proxy',
     description: 'Upgrade 握手需要 map $connection_upgrade，并转发 Upgrade / Connection 头。',
     example: `http {
     map $http_upgrade $connection_upgrade {
@@ -311,6 +311,7 @@ location /blog/ {
     id: 'security-headers',
     title: '安全响应头',
     tags: ['security', 'header'],
+    group: 'security',
     description: '生产环境常用安全头；注意 add_header 在子块会覆盖父级（Gixy 常见告警）。',
     example: `server {
     # 仅 HTTPS server 建议开启 HSTS
@@ -331,6 +332,7 @@ location /blog/ {
     id: 'gzip-cache',
     title: 'Gzip 与静态缓存',
     tags: ['performance', 'gzip'],
+    group: 'performance',
     description: '文本资源压缩 + 静态资源长缓存，是 nginxconfig.io 类生成器的默认项。',
     example: `http {
     gzip on;
@@ -357,6 +359,7 @@ location /blog/ {
     id: 'rate-limit',
     title: '限流 limit_req',
     tags: ['security', 'limit'],
+    group: 'security',
     description: '按 IP 限制请求速率，保护登录、接口被刷。',
     example: `http {
     limit_req_zone $binary_remote_addr zone=api_limit:10m rate=10r/s;
@@ -383,6 +386,7 @@ location /blog/ {
     id: 'cors',
     title: 'CORS 跨域',
     tags: ['header', 'cors'],
+    group: 'basic',
     description: '接口跨域时处理 OPTIONS 预检与允许源；生产勿用 * + 凭证组合。',
     example: `location /api/ {
     if ($request_method = OPTIONS) {
@@ -409,6 +413,7 @@ location /blog/ {
     id: 'alias-root',
     title: 'root 与 alias 区别',
     tags: ['location', 'alias'],
+    group: 'basic',
     description: 'root 拼接 URI；alias 替换 location 前缀。尾 / 不一致是路径错乱主因。',
     example: `# root：/img/a.png → /var/www/img/a.png
 location /img/ {
@@ -429,6 +434,7 @@ location /img/ {
     id: 'basic-auth',
     title: 'Basic Auth 访问控制',
     tags: ['security', 'auth'],
+    group: 'security',
     description: '临时保护预发环境或内部工具页。',
     example: `location /admin/ {
     auth_basic "Restricted";
@@ -440,7 +446,154 @@ location /img/ {
       '必须配合 HTTPS，否则账号密码明文传输。',
       '正式系统优先 OAuth / 网关鉴权，而非 Basic Auth。'
     ]
+  },
+  {
+    id: 'ssl-optimization',
+    title: 'SSL 调优',
+    tags: ['ssl', 'performance'],
+    group: 'performance',
+    description: 'SSL 会话缓存、OCSP Stapling、HSTS 与协议配置，提升 HTTPS 性能与安全。',
+    example: `server {
+    listen 443 ssl http2;
+    server_name example.com;
+
+    ssl_certificate     /etc/nginx/ssl/example.crt;
+    ssl_certificate_key /etc/nginx/ssl/example.key;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_ciphers         HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+
+    ssl_session_cache    shared:SSL:10m;
+    ssl_session_timeout  10m;
+    ssl_session_tickets  off;
+
+    ssl_stapling on;
+    ssl_stapling_verify on;
+    resolver 1.1.1.1 8.8.8.8 valid=300s;
+    resolver_timeout 5s;
+
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+}`,
+    notes: [
+      'ssl_session_cache shared:SSL:10m 约可存 40000 个会话。',
+      'OCSP Stapling 减少客户端证书验证延迟。',
+      'HSTS max-age 从低到高逐渐加大，确认 HTTPS 正常后再长时间锁死。',
+      'TLSv1.3 需 OpenSSL 1.1.1+。'
+    ]
+  },
+  {
+    id: 'server-tokens',
+    title: '隐藏版本号',
+    tags: ['security'],
+    group: 'security',
+    description: 'server_tokens off 隐藏 Nginx 版本号，减少信息泄露风险。',
+    example: `http {
+    server_tokens off;
+
+    # 若需要保留 Server 头但只显示 nginx，也可用 server_tokens on;
+}`,
+    notes: [
+      'server_tokens off 使 Server 头仅显示 nginx 不带版本号。',
+      '建议配合 error_page 自定义错误页，避免版本信息暴露在错误页脚注中。',
+      '这不是安全防御，只是减少信息收集面。'
+    ]
+  },
+  {
+    id: 'custom-error-pages',
+    title: '自定义错误页',
+    tags: ['error_page'],
+    group: 'basic',
+    description: '统一错误页样式，用户看不到后端 502 原始页。',
+    example: `server {
+    error_page 404 /404.html;
+    error_page 500 502 503 504 /50x.html;
+
+    location /404.html {
+        internal;
+        root /var/www/errors;
+    }
+
+    location /50x.html {
+        internal;
+        root /var/www/errors;
+    }
+}`,
+    notes: [
+      '错误页 location 设为 internal，禁止外部直接访问。',
+      '可在 error_page 后加 named location 实现更复杂逻辑：error_page 502 @fallback;',
+      '状态码替换可用 = 保持原状态：error_page 404 =200 /custom.html;'
+    ]
+  },
+  {
+    id: 'log-format',
+    title: '日志格式与条件',
+    tags: ['log'],
+    group: 'log',
+    description: '自定义日志格式，便于排查反代后链路的真实 IP 与耗时。',
+    example: `http {
+    log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                    '$status $body_bytes_sent "$http_referer" '
+                    '"$http_user_agent" "$http_x_forwarded_for"';
+
+    log_format upstream '$remote_addr [$time_local] "$request" '
+                        'status=$status body_bytes=$body_bytes_sent '
+                        'upstream_addr=$upstream_addr '
+                        'upstream_status=$upstream_status '
+                        'upstream_response_time=\${upstream_response_time}s '
+                        'request_time=$request_time';
+
+    access_log /var/log/nginx/access.log main;
+
+    # 健康检查/静态资源不记 access_log
+    location /health {
+        access_log off;
+        return 200 "ok";
+    }
+}`,
+    notes: [
+      'upstream 日志格式记录上游地址、响应状态码与耗时，排查 502/504 必备。',
+      'access_log off 可关闭特定 location 的日志，减轻 I/O。',
+      'error_log 支持 warn / error / crit 级别。'
+    ]
+  },
+  {
+    id: 'microcache',
+    title: 'FastCGI 微缓存',
+    tags: ['cache', 'performance'],
+    group: 'performance',
+    description: '对 PHP 动态页做几秒微缓存，大幅降低上游压力（需 FastCGI 模块）。',
+    example: `http {
+    fastcgi_cache_path /var/cache/nginx levels=1:2 keys_zone=fcgicache:10m inactive=60m;
+    fastcgi_cache_key "$scheme$request_method$host$request_uri";
+    fastcgi_cache_use_stale error timeout invalid_header updating;
+
+    server {
+        location ~ \\.php$ {
+            include fastcgi_params;
+            fastcgi_pass 127.0.0.1:9000;
+
+            fastcgi_cache fcgicache;
+            fastcgi_cache_valid 200 60m;
+        }
+    }
+}`,
+    notes: [
+      'keys_zone 大小建议 5–10m，大约可存几千个缓存键。',
+      '对动态内容设置 1m–5m 极短缓存即可显著降低 90% 上游请求。',
+      'fastcgi_cache_bypass 与 fastcgi_no_cache 配合 Cookie 判断跳过缓存。'
+    ]
   }
+]
+
+/** 片段分组（用于导航筛选） */
+export const SNIPPET_GROUPS: Array<{ key: string; label: string }> = [
+  { key: 'all', label: '全部' },
+  { key: 'basic', label: '基础' },
+  { key: 'proxy', label: '反代' },
+  { key: 'security', label: '安全' },
+  { key: 'performance', label: '性能' },
+  { key: 'advanced', label: '进阶' },
+  { key: 'log', label: '日志' }
 ]
 
 /** 场景模板：一键填入完整可改配置（对标 nginxconfig.io 的场景生成，轻量版） */
@@ -595,39 +748,76 @@ export const PROXY_PASS_SLASH_DEMOS: ProxyPassSlashDemo[] = [
   }
 ]
 
-// ─── 格式化 / 概览 ──────────────────────────────────────────────────────────
+// ─── 共享解析小工具 ─────────────────────────────────────────────────────────
+
+/** 去掉 # 注释（引号外），返回代码面字符；可选同步更新跨行引号状态 */
+function stripLineCode(
+  line: string,
+  state: { inDQuote: boolean; inSQuote: boolean } = { inDQuote: false, inSQuote: false }
+): string {
+  let code = ''
+  for (let j = 0; j < line.length; j++) {
+    const ch = line[j]
+    const prev = j > 0 ? line[j - 1] : ''
+    if (!state.inDQuote && !state.inSQuote && ch === '#') break
+    if (ch === '"' && prev !== '\\' && !state.inSQuote) {
+      state.inDQuote = !state.inDQuote
+      continue
+    }
+    if (ch === "'" && prev !== '\\' && !state.inDQuote) {
+      state.inSQuote = !state.inSQuote
+      continue
+    }
+    if (!state.inDQuote && !state.inSQuote) code += ch
+  }
+  return code
+}
+
+function stripNginxNoise(source: string): string {
+  const state = { inDQuote: false, inSQuote: false }
+  return source
+    .replace(/\r\n/g, '\n')
+    .split('\n')
+    .map(line => stripLineCode(line, state))
+    .join('\n')
+}
+
+function pushIssue(
+  issues: NginxIssue[],
+  severity: NginxIssueSeverity,
+  category: NginxIssueCategory,
+  line: number,
+  message: string
+) {
+  issues.push({ severity, category, line, message })
+}
+
+function dedupeIssues(issues: NginxIssue[]): NginxIssue[] {
+  const rank: Record<NginxIssueSeverity, number> = { error: 0, warning: 1, info: 2 }
+  issues.sort((a, b) => {
+    if (a.severity !== b.severity) return rank[a.severity] - rank[b.severity]
+    return a.line - b.line
+  })
+  const seen = new Set<string>()
+  return issues.filter(issue => {
+    const key = `${issue.severity}:${issue.category}:${issue.line}:${issue.message}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
+// ─── 格式化 ────────────────────────────────────────────────────────────────
 
 /** 轻量缩进格式化：按花括号调整层级，不解析完整语法 */
 export function formatNginxConfig(source: string): string {
   const lines = source.replace(/\r\n/g, '\n').split('\n')
   const out: string[] = []
   let depth = 0
-  let inDQuote = false
-  let inSQuote = false
+  const quoteState = { inDQuote: false, inSQuote: false }
 
   for (const raw of lines) {
-    // 统计本行有效括号（忽略注释与引号）
-    let code = ''
-    let lineInD: boolean = inDQuote
-    let lineInS: boolean = inSQuote
-    for (let j = 0; j < raw.length; j++) {
-      const ch = raw[j]
-      const prev = j > 0 ? raw[j - 1] : ''
-      if (!lineInD && !lineInS && ch === '#') break
-      if (ch === '"' && prev !== '\\' && !lineInS) {
-        lineInD = !lineInD
-        code += ch
-        continue
-      }
-      if (ch === "'" && prev !== '\\' && !lineInD) {
-        lineInS = !lineInS
-        code += ch
-        continue
-      }
-      if (!lineInD && !lineInS) code += ch
-      else code += ch
-    }
-
+    const code = stripLineCode(raw, quoteState)
     const trimmed = raw.trim()
     if (!trimmed) {
       out.push('')
@@ -636,58 +826,25 @@ export function formatNginxConfig(source: string): string {
 
     const openCount = (code.match(/\{/g) || []).length
     const closeCount = (code.match(/\}/g) || []).length
-    // 以 } 开头的行先减层
     const leadingClose = /^\}/.test(trimmed)
     if (leadingClose) depth = Math.max(0, depth - closeCount)
 
-    const indent = '    '.repeat(Math.max(0, depth))
-    // 保留行内注释：只规范左侧空白
-    out.push(indent + trimmed)
+    out.push('    '.repeat(Math.max(0, depth)) + trimmed)
 
     if (!leadingClose) {
       depth = Math.max(0, depth + openCount - closeCount)
     } else if (openCount > 0) {
       depth = Math.max(0, depth + openCount)
     }
-
-    inDQuote = lineInD
-    inSQuote = lineInS
   }
 
-  // 合并连续空行
-  return out
-    .join('\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .replace(/[ \t]+$/gm, '')
-    .trim() + (source.trim() ? '\n' : '')
-}
-
-export function getNginxOverview(source: string): NginxOverview {
-  const text = source || ''
-  const locations = extractLocations(text)
-  const servers = (text.match(/\bserver\s*\{/g) || []).length
-  const upstreams = (text.match(/\bupstream\s+\S+\s*\{/g) || []).length
-  const hasSsl =
-    /\blisten\s+[^;]*\bssl\b/.test(text) ||
-    /\bssl_certificate\b/.test(text)
-  const hasGzip = /\bgzip\s+on\s*;/.test(text)
-  const hasSecurityHeaders =
-    /Strict-Transport-Security|X-Content-Type-Options|X-Frame-Options|Content-Security-Policy/.test(
-      text
-    )
-  const hasRateLimit = /\blimit_req(_zone)?\b/.test(text)
-  const proxyLocations = locations.filter(l => !!l.proxyPass).length
-
-  return {
-    servers,
-    locations: locations.length,
-    upstreams,
-    hasSsl,
-    hasGzip,
-    hasSecurityHeaders,
-    hasRateLimit,
-    proxyLocations
-  }
+  return (
+    out
+      .join('\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .replace(/[ \t]+$/gm, '')
+      .trim() + (source.trim() ? '\n' : '')
+  )
 }
 
 // ─── location 提取与请求匹配模拟 ───────────────────────────────────────────
@@ -743,42 +900,12 @@ export const DEFAULT_SIMULATE_PATHS = [
   '/exact'
 ]
 
-function stripNginxNoise(source: string): string {
-  // 去掉 # 注释（引号外简化处理）与多余 \r
-  const lines = source.replace(/\r\n/g, '\n').split('\n')
-  return lines
-    .map(line => {
-      let inD = false
-      let inS = false
-      let out = ''
-      for (let i = 0; i < line.length; i++) {
-        const ch = line[i]
-        const prev = i > 0 ? line[i - 1] : ''
-        if (!inD && !inS && ch === '#') break
-        if (ch === '"' && prev !== '\\' && !inS) {
-          inD = !inD
-          out += ch
-          continue
-        }
-        if (ch === "'" && prev !== '\\' && !inD) {
-          inS = !inS
-          out += ch
-          continue
-        }
-        out += ch
-      }
-      return out
-    })
-    .join('\n')
-}
-
 /**
  * 从配置中提取 location 块（扁平列表，忽略 server 边界；模拟时按出现顺序）。
  */
 export function extractLocations(source: string): NginxLocation[] {
   const cleaned = stripNginxNoise(source)
   const locations: NginxLocation[] = []
-  // location [=|~*|~|^~]? pattern {
   const re =
     /location\s+(?:=\s*|~\*\s*|~\s*|\^~\s*)?(?:"([^"]+)"|'([^']+)'|(\S+))\s*\{/g
   let m: RegExpExecArray | null
@@ -794,7 +921,6 @@ export function extractLocations(source: string): NginxLocation[] {
     else if (/location\s+~\*\s*/.test(full)) modifier = 'iregex'
     else if (/location\s+~\s*/.test(full)) modifier = 'regex'
 
-    // 找匹配的右括号（按花括号深度）
     let depth = 1
     let i = m.index + full.length
     const startBody = i
@@ -868,10 +994,8 @@ export function normalizeRequestUri(input: string): { uri: string; path: string;
   }
 
   if (!path.startsWith('/')) path = `/${path}`
-  // 折叠重复斜杠（保留开头）
   path = path.replace(/\/{2,}/g, '/')
-  const uri = `${path}${query}`
-  return { uri, path, query }
+  return { uri: `${path}${query}`, path, query }
 }
 
 function prefixMatches(uriPath: string, prefix: string): boolean {
@@ -881,7 +1005,6 @@ function prefixMatches(uriPath: string, prefix: string): boolean {
 
 function compileNginxRegex(pattern: string, ignoreCase: boolean): RegExp | null {
   try {
-    // nginx 使用 PCRE；JS 无法完全等价，做常见转义兼容
     return new RegExp(pattern, ignoreCase ? 'i' : '')
   } catch {
     return null
@@ -912,7 +1035,6 @@ export function matchLocation(requestInput: string, source: string): LocationMat
     }
   }
 
-  // 1. exact
   for (const loc of locations) {
     if (loc.modifier !== 'exact') continue
     const hit = path === loc.pattern
@@ -927,14 +1049,11 @@ export function matchLocation(requestInput: string, source: string): LocationMat
     }
   }
 
-  // 2. 收集前缀（prefix + prefer）
   let bestPrefix: NginxLocation | null = null
   for (const loc of locations) {
     if (loc.modifier !== 'prefix' && loc.modifier !== 'prefer') continue
     const hit = prefixMatches(path, loc.pattern)
-    const better =
-      hit &&
-      (!bestPrefix || loc.pattern.length > bestPrefix.pattern.length)
+    const better = hit && (!bestPrefix || loc.pattern.length > bestPrefix.pattern.length)
     steps.push({
       location: loc,
       role: loc.modifier === 'prefer' ? 'prefer' : 'prefix',
@@ -948,7 +1067,6 @@ export function matchLocation(requestInput: string, source: string): LocationMat
     if (better) bestPrefix = loc
   }
 
-  // 2b. ^~ 最长前缀则停止
   if (bestPrefix?.modifier === 'prefer') {
     steps.push({
       location: bestPrefix,
@@ -967,7 +1085,6 @@ export function matchLocation(requestInput: string, source: string): LocationMat
     )
   }
 
-  // 3. 正则按配置顺序
   for (const loc of locations) {
     if (loc.modifier !== 'regex' && loc.modifier !== 'iregex') continue
     const re = compileNginxRegex(loc.pattern, loc.modifier === 'iregex')
@@ -1000,7 +1117,6 @@ export function matchLocation(requestInput: string, source: string): LocationMat
     }
   }
 
-  // 4. 回退最长前缀
   if (bestPrefix) {
     steps.push({
       location: bestPrefix,
@@ -1057,7 +1173,6 @@ function finishMatch(
  * 计算 proxy_pass 替换后的上游 URI（简化版官方规则）：
  * - proxy_pass 带 URI 路径（含尾 /）时：用该 URI 替换 location 匹配的前缀部分
  * - 仅 host（无路径）时：原样转发完整 URI
- * - 正则 location 的 proxy_pass 一般不应带 URI 路径
  */
 export function resolveProxyPass(
   path: string,
@@ -1066,21 +1181,18 @@ export function resolveProxyPass(
 ): { upstreamUri: string; upstreamTarget: string } | null {
   if (!loc.proxyPass) return null
   const target = loc.proxyPass.trim()
-  // 变量形式不展开
   if (target.includes('$')) {
     return { upstreamUri: `${path}${query}`, upstreamTarget: target }
   }
 
-  // http://host、http://host/、http://upstream_name/path
   const m = target.match(/^(https?:\/\/[^/]+)(\/.*)?$/i)
   if (!m) {
     return { upstreamUri: `${path}${query}`, upstreamTarget: target }
   }
 
   const origin = m[1]
-  const passUri = m[2] // undefined | "/" | "/v1/" 等
+  const passUri = m[2]
 
-  // 无 URI 部分：原样转发
   if (passUri === undefined) {
     return {
       upstreamUri: `${path}${query}`,
@@ -1088,7 +1200,6 @@ export function resolveProxyPass(
     }
   }
 
-  // 正则 location：官方不建议 proxy_pass 带 URI；此处仍做字面拼接提示
   if (loc.modifier === 'regex' || loc.modifier === 'iregex') {
     return {
       upstreamUri: `${passUri.replace(/\/$/, '')}${query}`,
@@ -1096,12 +1207,9 @@ export function resolveProxyPass(
     }
   }
 
-  // 前缀替换：location 前缀 → passUri
   const prefix = loc.pattern
-  let rest = path.startsWith(prefix) ? path.slice(prefix.length) : path.replace(/^\//, '')
-  // passUri 已含路径，与 rest 拼接
+  const rest = path.startsWith(prefix) ? path.slice(prefix.length) : path.replace(/^\//, '')
   let newPath = `${passUri}${rest}`.replace(/\/{2,}/g, '/')
-  // 保留 passUri 设计的尾 /
   if (passUri.endsWith('/') && !newPath.endsWith('/') && rest === '') {
     newPath = passUri
   }
@@ -1117,20 +1225,6 @@ export function matchMany(paths: string[], source: string): LocationMatchResult[
 }
 
 /**
- * 轻量静态校验：括号配对、指令分号、常见坑位提示。
- * 不做完整 nginx 语法解析，目标是前端快速排错。
- */
-function pushIssue(
-  issues: NginxIssue[],
-  severity: NginxIssueSeverity,
-  category: NginxIssueCategory,
-  line: number,
-  message: string
-) {
-  issues.push({ severity, category, line, message })
-}
-
-/**
  * 轻量静态校验：括号配对、指令分号、常见坑位 + 安全/最佳实践提示。
  * 参考 Gixy / nginxconfig.io 常见检查，不做完整 nginx 语法解析。
  */
@@ -1142,43 +1236,19 @@ export function validateNginxConfig(source: string): NginxIssue[] {
     return [{ severity: 'error', category: 'syntax', line: 1, message: '配置内容为空' }]
   }
 
-  // 括号栈：记录 { 所在行
   const braceStack: number[] = []
-  // 字符串/注释状态（按行简化，支持 " ' 与 # 注释）
-  let inDQuote = false
-  let inSQuote = false
+  const quoteState = { inDQuote: false, inSQuote: false }
   let addHeaderCount = 0
   let locationWithAddHeader = 0
   let hasSslListen = false
   let hasSslCert = false
   let hasHttpRedirect = false
   let hasProxyPass = false
-  let proxyMissingHostHeader = false
 
   for (let i = 0; i < lines.length; i++) {
     const lineNo = i + 1
     const raw = lines[i]
-    let code = ''
-
-    // 去掉注释与引号内容，仅对“代码面”做结构检查
-    for (let j = 0; j < raw.length; j++) {
-      const ch = raw[j]
-      const prev = j > 0 ? raw[j - 1] : ''
-
-      if (!inDQuote && !inSQuote && ch === '#') break
-
-      if (ch === '"' && prev !== '\\' && !inSQuote) {
-        inDQuote = !inDQuote
-        continue
-      }
-      if (ch === "'" && prev !== '\\' && !inDQuote) {
-        inSQuote = !inSQuote
-        continue
-      }
-
-      if (!inDQuote && !inSQuote) code += ch
-    }
-
+    const code = stripLineCode(raw, quoteState)
     const trimmedCode = code.trim()
     if (!trimmedCode) continue
 
@@ -1193,9 +1263,8 @@ export function validateNginxConfig(source: string): NginxIssue[] {
       }
     }
 
-    // 指令行应以 ; 或 { 或 } 结束（忽略单独的 }）
+    // 指令行应以 ; 或 { 或 } 结束
     if (trimmedCode !== '}' && !/[;{]$/.test(trimmedCode)) {
-      // 允许 if (...) 同行未写完的极少数写法外，绝大多数缺分号
       if (!/^if\s*\(/.test(trimmedCode) || !trimmedCode.endsWith(')')) {
         pushIssue(
           issues,
@@ -1215,7 +1284,6 @@ export function validateNginxConfig(source: string): NginxIssue[] {
         if (target.includes(' ') && !target.includes('$')) {
           pushIssue(issues, 'warning', 'syntax', lineNo, 'proxy_pass 目标含空格，请确认是否写错')
         }
-        // Gixy 风格：带变量的 proxy_pass 可能 SSRF
         if (/\$/.test(target) && /https?:\/\//i.test(target)) {
           pushIssue(
             issues,
@@ -1228,14 +1296,8 @@ export function validateNginxConfig(source: string): NginxIssue[] {
       }
     }
 
-    if (/\badd_header\b/.test(trimmedCode)) {
-      addHeaderCount++
-      if (/location\s+/.test(source.slice(Math.max(0, source.indexOf(raw) - 200), source.indexOf(raw) + raw.length))) {
-        // 粗略：同行或邻近 — 下面块扫描更准
-      }
-    }
+    if (/\badd_header\b/.test(trimmedCode)) addHeaderCount++
 
-    // 危险/易错提示
     if (/\bserver_name\s+_;/.test(trimmedCode) || /\bserver_name\s+""\s*;/.test(trimmedCode)) {
       pushIssue(
         issues,
@@ -1280,7 +1342,6 @@ export function validateNginxConfig(source: string): NginxIssue[] {
       pushIssue(issues, 'warning', 'syntax', lineNo, '同一指令行同时出现 root 与 alias，请拆分检查')
     }
 
-    // if is evil（官方警告）
     if (/^\s*if\s*\(/.test(trimmedCode) && !/return\s+\d+/.test(trimmedCode)) {
       pushIssue(
         issues,
@@ -1291,7 +1352,6 @@ export function validateNginxConfig(source: string): NginxIssue[] {
       )
     }
 
-    // Host 头伪造相关
     if (/\bproxy_set_header\s+Host\s+\$http_host\s*;/.test(trimmedCode)) {
       pushIssue(
         issues,
@@ -1312,7 +1372,6 @@ export function validateNginxConfig(source: string): NginxIssue[] {
       )
     }
 
-    // 绝对开放的 CORS
     if (
       /Access-Control-Allow-Origin[^;]*\*/.test(trimmedCode) &&
       /Access-Control-Allow-Credentials[^;]*true/i.test(source)
@@ -1326,7 +1385,10 @@ export function validateNginxConfig(source: string): NginxIssue[] {
       )
     }
 
-    if (/\bssl_protocols\b/.test(trimmedCode) && /SSLv3|TLSv1[^.\d]|TLSv1\.0|TLSv1\.1/.test(trimmedCode)) {
+    if (
+      /\bssl_protocols\b/.test(trimmedCode) &&
+      /SSLv3|TLSv1[^.\d]|TLSv1\.0|TLSv1\.1/.test(trimmedCode)
+    ) {
       pushIssue(
         issues,
         'warning',
@@ -1351,11 +1413,17 @@ export function validateNginxConfig(source: string): NginxIssue[] {
     }
 
     if (/\bdav_methods\b/.test(trimmedCode) || /\bcreate_full_put_path\s+on\s*;/.test(trimmedCode)) {
-      pushIssue(issues, 'warning', 'security', lineNo, '开启 WebDAV 写方法时请严格限制访问来源与鉴权')
+      pushIssue(
+        issues,
+        'warning',
+        'security',
+        lineNo,
+        '开启 WebDAV 写方法时请严格限制访问来源与鉴权'
+      )
     }
   }
 
-  if (inDQuote || inSQuote) {
+  if (quoteState.inDQuote || quoteState.inSQuote) {
     pushIssue(issues, 'error', 'syntax', lines.length, '存在未闭合的引号')
   }
 
@@ -1363,16 +1431,18 @@ export function validateNginxConfig(source: string): NginxIssue[] {
     pushIssue(issues, 'error', 'syntax', openLine, '花括号 { 未闭合')
   }
 
-  // 二次：location 块内 proxy_pass / 头 / add_header
+  // location 级：proxy_pass 尾 /、alias 一致性
   const locations = extractLocations(source)
   for (const loc of locations) {
     if (loc.proxyPass) {
       const target = loc.proxyPass
       const locHasSlash = loc.pattern.endsWith('/')
-      const passHasPath = /https?:\/\/[^/]+\/./i.test(target) || /https?:\/\/[^/]+\/$/i.test(target)
+      const passHasPath = /https?:\/\/[^/]+\//i.test(target)
       const passHasSlash = /\/$/.test(target.replace(/\$[a-zA-Z0-9_]+$/, ''))
+      const isHttp = /^https?:\/\//.test(target)
+      const isRegex = loc.modifier === 'regex' || loc.modifier === 'iregex'
 
-      if (locHasSlash && !passHasSlash && /^https?:\/\//.test(target) && !target.includes('$')) {
+      if (locHasSlash && !passHasSlash && isHttp && !target.includes('$')) {
         pushIssue(
           issues,
           'warning',
@@ -1381,13 +1451,7 @@ export function validateNginxConfig(source: string): NginxIssue[] {
           `location ${loc.pattern} 带尾 /，而 proxy_pass 未带尾 /：URI 会原样转发。若希望剥前缀，请写成 proxy_pass .../;`
         )
       }
-      if (
-        !locHasSlash &&
-        passHasPath &&
-        loc.modifier !== 'regex' &&
-        loc.modifier !== 'iregex' &&
-        /^https?:\/\//.test(target)
-      ) {
+      if (!locHasSlash && passHasPath && !isRegex && isHttp) {
         pushIssue(
           issues,
           'warning',
@@ -1396,12 +1460,7 @@ export function validateNginxConfig(source: string): NginxIssue[] {
           `location ${loc.pattern} 不带尾 /，proxy_pass 却带 URI 路径：前缀替换规则可能不符合预期`
         )
       }
-
-      // 正则 location + proxy_pass 带 URI
-      if (
-        (loc.modifier === 'regex' || loc.modifier === 'iregex') &&
-        /https?:\/\/[^/]+\//i.test(target)
-      ) {
+      if (isRegex && /https?:\/\/[^/]+\//i.test(target)) {
         pushIssue(
           issues,
           'warning',
@@ -1412,7 +1471,6 @@ export function validateNginxConfig(source: string): NginxIssue[] {
       }
     }
 
-    // alias + 无尾 / 已在行扫描
     if (loc.alias && loc.pattern.endsWith('/') && !loc.alias.endsWith('/')) {
       pushIssue(
         issues,
@@ -1422,49 +1480,61 @@ export function validateNginxConfig(source: string): NginxIssue[] {
         `alias 与 location ${loc.pattern} 尾 / 不一致，可能导致路径穿越或 404`
       )
     }
+
+    if (
+      (loc.modifier === 'regex' || loc.modifier === 'iregex') &&
+      /\.(js|css|png|jpg|jpeg|gif|ico|svg|woff2?|webp)$/.test(loc.pattern) &&
+      loc.tryFiles &&
+      !/=\s*404/.test(loc.tryFiles)
+    ) {
+      pushIssue(
+        issues,
+        'info',
+        'practice',
+        loc.line,
+        '静态文件 location 的 try_files 建议以 =404 结尾，避免不存在的文件内部重定向循环'
+      )
+    }
   }
 
-  // 块级扫描：proxy 缺 Host、location 内 add_header 覆盖
+  // 块级扫描：proxy 头、keepalive、add_header
   const blockRegex =
     /location\s+(?:=\s*|~\*\s*|~\s*|\^~\s*)?(?:"[^"]+"|'[^']+'|\S+)\s*\{([\s\S]*?)\}/g
   let blockMatch: RegExpExecArray | null
+  const hasUpstreamKeepalive = /\bupstream\b[\s\S]*\bkeepalive\b/.test(source)
+
   while ((blockMatch = blockRegex.exec(source)) !== null) {
     const body = blockMatch[1]
     const line = source.slice(0, blockMatch.index).split('\n').length
+
     if (/\bproxy_pass\b/.test(body)) {
-      if (!/\bproxy_set_header\s+Host\b/.test(body) && !/\bproxy_set_header\s+Host\b/.test(source)) {
-        // 仅当该 location 自己 proxy 且未见 Host 时提示
-        if (!/\bproxy_set_header\s+Host\b/.test(body)) {
-          proxyMissingHostHeader = true
-          pushIssue(
-            issues,
-            'info',
-            'practice',
-            line,
-            '反代 location 建议设置 proxy_set_header Host $host（及 X-Forwarded-*）'
-          )
-        }
+      if (!/\bproxy_set_header\s+Host\b/.test(body)) {
+        pushIssue(
+          issues,
+          'info',
+          'practice',
+          line,
+          '反代 location 建议设置 proxy_set_header Host $host（及 X-Forwarded-*）'
+        )
       }
-      if (/\bproxy_set_header\s+Connection\s+""\s*;/.test(body) === false && /\bkeepalive\b/.test(source)) {
-        // 有 upstream keepalive 时常见遗漏
-        if (/\bupstream\b[\s\S]*keepalive/.test(source) && /\bproxy_pass\s+http:\/\/[a-zA-Z_]/.test(body)) {
-          pushIssue(
-            issues,
-            'info',
-            'practice',
-            line,
-            'upstream 启用了 keepalive 时，location 内建议 proxy_http_version 1.1 且 Connection ""'
-          )
-        }
+      if (
+        hasUpstreamKeepalive &&
+        /\bproxy_pass\s+http:\/\/[a-zA-Z_]/.test(body) &&
+        !/\bproxy_set_header\s+Connection\s+""\s*;/.test(body)
+      ) {
+        pushIssue(
+          issues,
+          'info',
+          'practice',
+          line,
+          'upstream 启用了 keepalive 时，location 内建议 proxy_http_version 1.1 且 Connection ""'
+        )
       }
     }
-    if (/\badd_header\b/.test(body)) {
-      locationWithAddHeader++
-    }
+    if (/\badd_header\b/.test(body)) locationWithAddHeader++
   }
 
   if (addHeaderCount > 0 && locationWithAddHeader > 0) {
-    // Gixy: add_header inheritance
     pushIssue(
       issues,
       'info',
@@ -1475,7 +1545,13 @@ export function validateNginxConfig(source: string): NginxIssue[] {
   }
 
   if (hasSslListen && !hasSslCert) {
-    pushIssue(issues, 'warning', 'practice', 1, '已 listen ssl 但未发现 ssl_certificate，证书指令可能在 include 中')
+    pushIssue(
+      issues,
+      'warning',
+      'practice',
+      1,
+      '已 listen ssl 但未发现 ssl_certificate，证书指令可能在 include 中'
+    )
   }
 
   if (hasSslListen && !hasHttpRedirect && /\blisten\s+80\b/.test(source)) {
@@ -1498,22 +1574,90 @@ export function validateNginxConfig(source: string): NginxIssue[] {
     )
   }
 
-  // 避免未使用变量告警
-  void proxyMissingHostHeader
+  if (hasProxyPass && !/\bserver_tokens\s+off\s*;/.test(source) && /\bserver\s*\{/.test(source)) {
+    pushIssue(
+      issues,
+      'info',
+      'security',
+      1,
+      '建议添加 server_tokens off 隐藏 Nginx 版本号，减少信息泄露'
+    )
+  }
 
-  // 排序：error > warning > info，再按行号
-  const rank: Record<NginxIssueSeverity, number> = { error: 0, warning: 1, info: 2 }
-  issues.sort((a, b) => {
-    if (a.severity !== b.severity) return rank[a.severity] - rank[b.severity]
-    return a.line - b.line
-  })
+  if (hasProxyPass && !/add_header\s+X-Frame-Options/i.test(source)) {
+    pushIssue(
+      issues,
+      'info',
+      'security',
+      1,
+      '反代服务缺少 X-Frame-Options 安全头，建议 add_header X-Frame-Options SAMEORIGIN always'
+    )
+  }
 
-  // 去重
-  const seen = new Set<string>()
-  return issues.filter(issue => {
-    const key = `${issue.severity}:${issue.category}:${issue.line}:${issue.message}`
-    if (seen.has(key)) return false
-    seen.add(key)
-    return true
-  })
+  if (hasProxyPass && !/add_header\s+X-Content-Type-Options/i.test(source)) {
+    pushIssue(
+      issues,
+      'info',
+      'security',
+      1,
+      '反代服务缺少 X-Content-Type-Options 安全头，建议 add_header X-Content-Type-Options nosniff always'
+    )
+  }
+
+  if (hasSslListen && hasSslCert) {
+    if (!/\bssl_session_cache\b/.test(source)) {
+      pushIssue(
+        issues,
+        'info',
+        'practice',
+        1,
+        'HTTPS 配置未设置 ssl_session_cache 共享缓存，SSL 握手性能可能较低'
+      )
+    }
+    if (/\bssl_protocols\b/.test(source) && !/\bTLSv1\.(?:2|3)\b/.test(source)) {
+      pushIssue(
+        issues,
+        'info',
+        'practice',
+        1,
+        'ssl_protocols 中未包含 TLSv1.2 / TLSv1.3 以支持现代客户端'
+      )
+    }
+  }
+
+  if (hasProxyPass) {
+    let hasSizeAbove1m = false
+    for (const line of lines) {
+      const m = line.match(/client_max_body_size\s+(\d+)([mk]?)\s*;/i)
+      if (!m) continue
+      const val = parseInt(m[1], 10)
+      const unit = (m[2] || '').toLowerCase()
+      if (unit === 'm' && val > 1) hasSizeAbove1m = true
+      else if (unit === 'k' && val > 1024) hasSizeAbove1m = true
+      else if (!unit && val > 1048576) hasSizeAbove1m = true
+      else if (val === 0) hasSizeAbove1m = true
+    }
+    if (!hasSizeAbove1m) {
+      pushIssue(
+        issues,
+        'info',
+        'practice',
+        1,
+        '配置含 proxy_pass 但 client_max_body_size 未显式设置（默认 1m），上传可能遇到 413'
+      )
+    }
+  }
+
+  if (hasSslListen && hasProxyPass && !/X-Forwarded-Proto/i.test(source)) {
+    pushIssue(
+      issues,
+      'info',
+      'practice',
+      1,
+      'HTTPS 反代建议设置 proxy_set_header X-Forwarded-Proto $scheme，便于后端判断协议'
+    )
+  }
+
+  return dedupeIssues(issues)
 }
+

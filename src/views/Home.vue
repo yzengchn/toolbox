@@ -124,10 +124,8 @@ onMounted(() => {
 
 <style scoped>
 .home {
-  width: min(100%, var(--content-max-width));
   height: calc(100vh - var(--header-height) - 1px);
   height: calc(100dvh - var(--header-height) - 1px);
-  margin: 0 auto;
   padding: clamp(16px, 2vw, 24px);
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
