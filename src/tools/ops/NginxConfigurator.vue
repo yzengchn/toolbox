@@ -45,8 +45,7 @@
             class="config-input"
             placeholder="粘贴或编写 Nginx 配置，例如：&#10;location /api/ {&#10;    proxy_pass http://127.0.0.1:3000/;&#10;}"
             :autosize="{ minRows: 16, maxRows: 28 }"
-            @keydown.ctrl.enter="runValidate"
-            @keydown.meta.enter="runValidate"
+            @keydown="onEditorKeydown"
           />
 
           <div class="result-bar">
@@ -443,6 +442,14 @@ const runValidate = () => {
     message.info(`发现 ${warningCount.value} 警告、${infoCount.value} 建议`)
   } else {
     message.info(`发现 ${infoCount.value} 条实践建议`)
+  }
+}
+
+/** 单处理器：避免多个 @keydown.* 被合并成数组传给 n-input 的 onKeydown prop */
+const onEditorKeydown = (e: KeyboardEvent) => {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+    e.preventDefault()
+    runValidate()
   }
 }
 
