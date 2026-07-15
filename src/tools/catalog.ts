@@ -175,10 +175,24 @@ export const allTools: ToolInfo[] = [
   {
     id: 'cron-parser',
     name: 'Cron 表达式解析',
-    description: '校验 Cron 表达式并查看标准化结果与下一次执行时间',
+    description: '校验 Cron、字段释义、下次执行时间，内置备份/巡检/CI/别名等常用场景模板',
     icon: 'mdi:calendar-clock-outline',
     category: 'time',
-    keywords: ['cron', 'schedule', 'parser', '解析', '定时', '计划任务'],
+    keywords: [
+      'cron',
+      'schedule',
+      'parser',
+      '解析',
+      '定时',
+      '计划任务',
+      'crontab',
+      '表达式',
+      '@daily',
+      '工作日',
+      '备份',
+      '巡检',
+      'CI'
+    ],
     path: '/tool/cron-parser'
   },
   {
@@ -364,7 +378,7 @@ export const allTools: ToolInfo[] = [
   {
     id: 'nginx-configurator',
     name: 'Nginx 配置器',
-    description: '结构/安全校验、location 请求模拟、场景模板与 proxy_pass 等常用片段说明',
+    description: '结构/安全校验、location 请求模拟、多场景模板与常用配置片段说明',
     icon: 'mdi:server-network',
     category: 'ops',
     keywords: [
@@ -383,9 +397,37 @@ export const allTools: ToolInfo[] = [
       'upstream',
       'rewrite',
       'ssl',
+      'websocket',
+      '限流',
+      '缓存',
       '运维'
     ],
     path: '/tool/nginx-configurator'
+  },
+  {
+    id: 'chmod-calculator',
+    name: 'chmod 权限计算器',
+    description: 'Linux/Unix 文件权限互转：数字 755、符号 rwxr-xr-x、勾选 rwx 与 setuid/setgid/sticky',
+    icon: 'mdi:shield-key-outline',
+    category: 'ops',
+    keywords: [
+      'chmod',
+      '权限',
+      'permission',
+      '755',
+      '644',
+      'rwx',
+      'linux',
+      'unix',
+      'setuid',
+      'setgid',
+      'sticky',
+      'umask',
+      '文件权限',
+      '目录权限',
+      '运维'
+    ],
+    path: '/tool/chmod-calculator'
   }
 ]
 

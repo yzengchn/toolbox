@@ -44,7 +44,8 @@ const toolComponentLoaders: Record<string, ToolComponentLoader> = {
   'text-diff': () => import('./file/TextCompare.vue'),
   'file-dedup': () => import('./file/FileDedup.vue'),
   'tree-generator': () => import('./file/TreeGenerator.vue'),
-  'nginx-configurator': () => import('./ops/NginxConfigurator.vue')
+  'nginx-configurator': () => import('./ops/NginxConfigurator.vue'),
+  'chmod-calculator': () => import('./ops/ChmodCalculator.vue')
 }
 
 const loadedToolComponents = new Map<string, Promise<Component | undefined>>()

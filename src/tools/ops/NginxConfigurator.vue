@@ -6,7 +6,13 @@
     />
 
     <div class="tool-content">
-      <n-card size="small" class="template-card" title="场景模板">
+      <n-card size="small" class="template-card">
+        <template #header>
+          <div class="snippets-card-header">
+            <span>场景模板</span>
+            <span class="snippets-count">{{ NGINX_TEMPLATES.length }} 套</span>
+          </div>
+        </template>
         <div class="template-row">
           <button
             v-for="tpl in NGINX_TEMPLATES"
@@ -215,13 +221,19 @@
         </n-card>
       </div>
 
-      <n-card title="常用配置说明" class="snippets-card">
+      <n-card class="snippets-card">
+        <template #header>
+          <div class="snippets-card-header">
+            <span>常用配置说明</span>
+            <span class="snippets-count">{{ filteredSnippets.length }} / {{ NGINX_SNIPPETS.length }}</span>
+          </div>
+        </template>
         <div class="snippet-layout">
           <div class="snippet-nav" role="tablist" aria-label="配置片段列表">
             <div class="snippet-filter-bar">
               <n-input
                 v-model:value="snippetSearchText"
-                placeholder="搜索片段..."
+                placeholder="搜索标题、标签、说明..."
                 clearable
                 size="small"
                 class="snippet-search"
@@ -236,6 +248,7 @@
                   @click="snippetGroupFilter = g.key"
                 >
                   {{ g.label }}
+                  <span v-if="g.key !== 'all'" class="group-chip-count">{{ groupCounts[g.key] || 0 }}</span>
                 </button>
               </div>
             </div>
@@ -257,12 +270,18 @@
                 </span>
               </button>
             </div>
-            <p v-else class="snippet-empty result-hint">无匹配片段</p>
+            <p v-else class="snippet-empty result-hint">无匹配片段，试试其他关键词或分组</p>
           </div>
 
-          <div v-if="activeSnippet" class="snippet-detail" role="tabpanel">
+          <div v-if="activeSnippet && filteredSnippets.length" class="snippet-detail" role="tabpanel">
             <div class="snippet-detail-head">
-              <h3>{{ activeSnippet.title }}</h3>
+              <div class="snippet-detail-titles">
+                <h3>{{ activeSnippet.title }}</h3>
+                <div class="snippet-detail-meta">
+                  <span v-if="activeSnippet.group" class="tag-pill">{{ groupLabel(activeSnippet.group) }}</span>
+                  <span v-for="tag in activeSnippet.tags" :key="tag" class="tag-pill">{{ tag }}</span>
+                </div>
+              </div>
               <n-space :size="8">
                 <n-button size="small" secondary @click="copySnippet(activeSnippet.example)">
                   复制示例
@@ -281,6 +300,9 @@
                 <li v-for="(note, i) in activeSnippet.notes" :key="i">{{ note }}</li>
               </ul>
             </div>
+          </div>
+          <div v-else class="snippet-detail snippet-detail-empty" role="status">
+            <p class="result-hint">选择左侧片段查看示例与说明</p>
           </div>
         </div>
       </n-card>
@@ -356,6 +378,20 @@ const validated = ref(false)
 const customResult = ref<LocationMatchResult | null>(null)
 const issueFilter = ref<'all' | NginxIssueCategory>('all')
 
+const groupLabelMap = Object.fromEntries(SNIPPET_GROUPS.map(g => [g.key, g.label])) as Record<
+  string,
+  string
+>
+
+const groupCounts = computed(() => {
+  const counts: Record<string, number> = {}
+  for (const s of NGINX_SNIPPETS) {
+    if (!s.group) continue
+    counts[s.group] = (counts[s.group] || 0) + 1
+  }
+  return counts
+})
+
 const filteredSnippets = computed(() => {
   const search = snippetSearchText.value.trim().toLowerCase()
   const group = snippetGroupFilter.value
@@ -365,14 +401,28 @@ const filteredSnippets = computed(() => {
     return (
       s.title.toLowerCase().includes(search) ||
       s.description.toLowerCase().includes(search) ||
-      s.tags.some(t => t.toLowerCase().includes(search))
+      s.tags.some(t => t.toLowerCase().includes(search)) ||
+      s.notes.some(n => n.toLowerCase().includes(search)) ||
+      s.example.toLowerCase().includes(search) ||
+      (s.group ? (groupLabelMap[s.group] || s.group).toLowerCase().includes(search) : false)
     )
   })
 })
 
-const activeSnippet = computed(
-  () => NGINX_SNIPPETS.find(item => item.id === activeSnippetId.value) ?? NGINX_SNIPPETS[0]
-)
+const activeSnippet = computed(() => {
+  const current = NGINX_SNIPPETS.find(item => item.id === activeSnippetId.value)
+  if (current && filteredSnippets.value.some(s => s.id === current.id)) return current
+  return filteredSnippets.value[0] ?? NGINX_SNIPPETS[0]
+})
+
+const groupLabel = (group?: string) => (group ? groupLabelMap[group] || group : '')
+
+watch(filteredSnippets, list => {
+  if (!list.length) return
+  if (!list.some(s => s.id === activeSnippetId.value)) {
+    activeSnippetId.value = list[0].id
+  }
+})
 
 const errorCount = computed(() => issues.value.filter(i => i.severity === 'error').length)
 const warningCount = computed(() => issues.value.filter(i => i.severity === 'warning').length)
@@ -542,17 +592,33 @@ watch(
 
 .template-row {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.template-row::-webkit-scrollbar {
+  height: 6px;
+}
+
+.template-row::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-border-strong, var(--color-border)) 80%, transparent);
 }
 
 .template-chip {
   display: flex;
+  flex: 0 0 auto;
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
-  min-width: 140px;
-  max-width: 220px;
+  width: 168px;
+  min-width: 168px;
+  max-width: 168px;
   padding: 8px 12px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
@@ -582,6 +648,10 @@ watch(
 }
 
 .template-desc {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   font-size: 11px;
   color: var(--color-text-tertiary);
   line-height: 1.35;
@@ -976,17 +1046,30 @@ watch(
   font-family: var(--font-mono);
 }
 
+.snippets-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.snippets-count {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+}
+
 .snippet-layout {
   display: grid;
-  grid-template-columns: minmax(200px, 280px) minmax(0, 1fr);
+  grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
   gap: var(--spacing-md);
-  min-height: 360px;
+  min-height: 420px;
 }
 
 .snippet-nav {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-height: 0;
   padding-right: 4px;
 }
 
@@ -1008,6 +1091,9 @@ watch(
 }
 
 .group-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   padding: 3px 8px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-pill);
@@ -1033,12 +1119,22 @@ watch(
   color: var(--color-primary);
 }
 
+.group-chip-count {
+  min-width: 1.1em;
+  color: inherit;
+  opacity: 0.75;
+  font-variant-numeric: tabular-nums;
+}
+
 .snippet-nav-list {
-  max-height: 440px;
+  flex: 1;
+  max-height: 520px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 4px;
+  padding-right: 2px;
+  scrollbar-width: thin;
 }
 
 .snippet-empty {
@@ -1108,11 +1204,27 @@ watch(
   gap: var(--spacing-sm);
 }
 
+.snippet-detail-empty {
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-secondary);
+}
+
 .snippet-detail-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--spacing-md);
+}
+
+.snippet-detail-titles {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .snippet-detail-head h3 {
@@ -1120,6 +1232,12 @@ watch(
   font-size: var(--font-size-lg);
   font-weight: 600;
   color: var(--color-text-primary);
+}
+
+.snippet-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
 .snippet-desc {
@@ -1141,7 +1259,7 @@ watch(
   color: var(--color-text-primary);
   white-space: pre;
   overflow: auto;
-  max-height: 360px;
+  max-height: 420px;
 }
 
 .snippet-notes {
