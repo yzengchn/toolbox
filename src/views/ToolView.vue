@@ -257,8 +257,8 @@ watch(
 
 .tool-view :deep(.tool-container) {
   width: 100%;
-  max-width: var(--content-max-width);
-  margin-inline: 0 auto;
+  max-width: none;
+  margin-inline: 0;
   min-height: 100%;
   padding-top: var(--spacing-sm);
 }

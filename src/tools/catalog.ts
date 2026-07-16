@@ -112,10 +112,27 @@ export const allTools: ToolInfo[] = [
   {
     id: 'regex-tester',
     name: '正则表达式',
-    description: '测试 JavaScript 正则表达式，查看匹配分组并执行文本替换',
+    description: '场景向导与积木拼装，实时高亮匹配、替换与白话说明，降低正则学习门槛',
     icon: 'mdi:regex',
     category: 'utilities',
-    keywords: ['regex', 'regexp', 'regular expression', '正则', '正则表达式', '匹配', '分组', '替换', '测试', '中文字符', '空白行', 'Email', 'URL', '电话号码', 'QQ号', '邮政编码', '身份证号', '日期'],
+    keywords: [
+      'regex',
+      'regexp',
+      'regular expression',
+      '正则',
+      '正则表达式',
+      '匹配',
+      '分组',
+      '替换',
+      '测试',
+      '教程',
+      '向导',
+      '中文字符',
+      'Email',
+      'URL',
+      '手机号',
+      '身份证'
+    ],
     path: '/tool/regex-tester'
   },
   {
@@ -129,11 +146,22 @@ export const allTools: ToolInfo[] = [
   },
   {
     id: 'qrcode-generator',
-    name: '二维码生成器',
-    description: '生成二维码图片',
+    name: '二维码工具',
+    description: '生成二维码图片，或上传/粘贴图片解析二维码内容',
     icon: 'mdi:qrcode',
     category: 'utilities',
-    keywords: ['qrcode', 'qr', '二维码', '生成器', 'barcode'],
+    keywords: [
+      'qrcode',
+      'qr',
+      '二维码',
+      '生成器',
+      '解析',
+      '识别',
+      '扫码',
+      'barcode',
+      'decode',
+      'encode'
+    ],
     path: '/tool/qrcode-generator'
   },
   {

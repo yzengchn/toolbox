@@ -5,7 +5,7 @@
         <p class="eyebrow">在线工具 · DevTool</p>
         <p id="home-title" class="home-title">ToolBox 在线开发者工具箱</p>
         <p class="description">
-          面向开发者的在线工具集合，覆盖 JSON 格式化、Base64 编码解码、JWT 解码、时间戳转换、正则表达式、CIDR 网段计算器、端口扫描，以及 JT808、GB32960、CAN/J1939、OCPP、VIN 等车联网工具场景。
+          面向开发者的在线工具集合，覆盖 JSON/SQL 格式化、Base64/JWT、正则、Cron、Nginx 配置、chmod 权限、文本比较与文件去重，以及 JT808、GB32960、CAN/J1939、OCPP、VIN 等车联网工具场景。
         </p>
       </div>
 
